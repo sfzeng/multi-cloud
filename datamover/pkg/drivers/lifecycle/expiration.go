@@ -17,31 +17,29 @@ package lifecycle
 import (
 	"context"
 	"errors"
+	"strconv"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/micro/go-micro/metadata"
+	"github.com/opensds/multi-cloud/api/pkg/common"
 	. "github.com/opensds/multi-cloud/datamover/pkg/utils"
 	datamover "github.com/opensds/multi-cloud/datamover/proto"
 	osdss3 "github.com/opensds/multi-cloud/s3/proto"
+	log "github.com/sirupsen/logrus"
 )
 
-func deleteObj(objKey string, lastmodifed int64, virtBucket string, bkend *BackendInfo) error {
-	log.Infof("object expiration: objKey=%s, virtBucket=%s, bkend:%+v\n", objKey, virtBucket, *bkend)
+func deleteObj(objKey string, lastmodifed int64, virtBucket string) error {
+	log.Infof("object expiration: objKey=%s, virtBucket=%s\n", objKey, virtBucket)
 	if virtBucket == "" {
 		log.Infof("expiration of object[%s] is failed: virtual bucket is null.\n", objKey)
 		return errors.New(DMERR_InternalError)
 	}
 
-	loca := &LocationInfo{StorType: bkend.StorType, Region: bkend.Region, EndPoint: bkend.EndPoint, BucketName: bkend.BucketName,
-		Access: bkend.Access, Security: bkend.Security, BakendName: bkend.BakendName, VirBucket: virtBucket}
-	err := deleteObjFromBackend(objKey, loca)
-	if err != nil {
-		return err
-	}
-
 	// delete metadata
-	delMetaReq := osdss3.DeleteObjectInput{Bucket: virtBucket, Key: objKey/*, Lastmodified: lastmodifed*/}
-	ctx := context.Background()
-	_, err = s3client.DeleteObject(ctx, &delMetaReq)
+	delMetaReq := osdss3.DeleteObjectInput{Bucket: virtBucket, Key: objKey, LastModified: lastmodifed}
+	ctx := metadata.NewContext(context.Background(), map[string]string{
+		common.CTX_KEY_IS_ADMIN: strconv.FormatBool(true),
+	})
+	_, err := s3client.DeleteObject(ctx, &delMetaReq)
 	if err != nil {
 		// if it is deleted failed, it will be delete again in the next schedule round
 		log.Errorf("delete object metadata of obj[bucket:%s,objKey:%s] failed, err:%v\n",
@@ -56,22 +54,13 @@ func deleteObj(objKey string, lastmodifed int64, virtBucket string, bkend *Backe
 }
 
 func doExpirationAction(acReq *datamover.LifecycleActionRequest) error {
-	log.Infof("delete action: delete %s.\n", acReq.ObjKey)
+	log.Infof("expiration action: delete %s.\n", acReq.ObjKey)
 
-	loc, err := getBackendInfo(&acReq.SourceBackend, false)
+	err := deleteObj(acReq.ObjKey, acReq.LastModified, acReq.BucketName)
 	if err != nil {
-		log.Errorf("expiration of %s failed because get location failed\n", acReq.ObjKey)
-		return err
-	}
-
-	err = deleteObj(acReq.ObjKey, acReq.LastModified, acReq.BucketName, loc)
-	if err != nil && err.Error() == DMERR_NoPermission {
-		// if permission denied, then flash backend information and try again
-		loc, err = getBackendInfo(&acReq.SourceBackend, true)
-		if err != nil {
-			return err
-		}
-		err = deleteObj(acReq.ObjKey, acReq.LastModified, acReq.BucketName, loc)
+		log.Errorf("expiration execute failed, err:%v\n", err)
+	} else {
+		log.Infof("expiration execute suceed, obj:%s\n", acReq.ObjKey)
 	}
 
 	return err

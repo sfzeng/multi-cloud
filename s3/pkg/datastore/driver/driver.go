@@ -16,7 +16,7 @@ type StorageDriver interface {
 	Get(ctx context.Context, object *pb.Object, start int64, end int64) (io.ReadCloser, error)
 	Delete(ctx context.Context, object *pb.DeleteObjectInput) error
 	// TODO AppendObject
-	Copy(ctx context.Context, stream io.Reader, target *pb.Object) (dscommon.PutResult, error)
+	//Copy(ctx context.Context, stream io.Reader, target *pb.Object) (dscommon.PutResult, error)
 
 	InitMultipartUpload(ctx context.Context, object *pb.Object) (*pb.MultipartUpload, error)
 	UploadPart(ctx context.Context, stream io.Reader, multipartUpload *pb.MultipartUpload,
@@ -27,4 +27,7 @@ type StorageDriver interface {
 	AbortMultipartUpload(ctx context.Context, multipartUpload *pb.MultipartUpload) error
 	// Close: cleanup when driver needs to be stopped.
 	Close() error
+
+	// change storage class
+	ChangeStorageClass(ctx context.Context, object *pb.Object, newClass *string) error
 }

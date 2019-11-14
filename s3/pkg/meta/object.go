@@ -27,6 +27,7 @@ const (
 	OBJECT_CACHE_PREFIX = "object:"
 )
 
+// Object will be updated to cache while willNeed is true
 func (m *Meta) GetObject(ctx context.Context, bucketName string, objectName string, willNeed bool) (object *Object, err error) {
 	getObject := func() (o helper.Serializable, err error) {
 		log.Info("GetObject CacheMiss. bucket:", bucketName, "object:", objectName)
@@ -35,10 +36,7 @@ func (m *Meta) GetObject(ctx context.Context, bucketName string, objectName stri
 			return
 		}
 		log.Infoln("GetObject object.Name:", object.ObjectKey)
-		if object.ObjectKey != objectName {
-			err = ErrNoSuchKey
-			return
-		}
+
 		return object, nil
 	}
 
@@ -114,4 +112,3 @@ func (m *Meta) DeleteObject(ctx context.Context, object *Object) error {
 
 	return err
 }
-

@@ -76,6 +76,7 @@ func handleDBError(in error) (out error) {
 		return nil
 	}
 
+	log.Errorf("db error:%v\n", in)
 	if in == sql.ErrNoRows {
 		out = ErrNoSuchKey
 	} else {

@@ -48,9 +48,10 @@ func (m *Meta) GetBucket(ctx context.Context, bucketName string, willNeed bool) 
 	if err != nil {
 		if err == ErrNoSuchKey {
 			err = ErrNoSuchBucket
-		} else if err != ErrDBError {
+		} else {
 			err = ErrInternalError
 		}
+		log.Errorf("get bucket failed:%v\n", err)
 		return
 	}
 	bucket, ok := b.(*Bucket)

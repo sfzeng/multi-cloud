@@ -36,7 +36,7 @@ service S3 {
 	rpc DeleteUploadRecord(MultipartUploadRecord) returns (BaseResponse) {}
 
 	rpc HeadObject(BaseObjRequest) returns (Object) {}
-	rpc CopyObject(CopyObjectRequest) returns (BaseResponse) {}
+	rpc CopyObject(CopyObjectRequest) returns (CopyObjectResponse) {}
 	rpc CopyObjPart(CopyObjPartRequest) returns (CopyObjPartResponse) {}
 	rpc PutObjACL(PutObjACLRequest) returns (BaseResponse) {}
 	rpc GetObjACL(BaseObjRequest) returns (ObjACL) {}
@@ -55,11 +55,13 @@ service S3 {
 }
 
 message CopyObjectRequest {
-	string objKey = 1;
-	string srcBucket = 2;
-	string targetBucket = 3;
-	string targetBackend = 4;
-	int32  targetTier = 5;
+	string srcObject = 1;
+	string targetObject = 2;
+	string srcBucket = 3;
+	string targetBucket = 4;
+	string targetLocation = 5;
+	int32  targetTier = 6;
+	int32  copyType = 7;
 }
 
 message PutObjectRequest {
@@ -78,10 +80,18 @@ message GetObjectMetaResult {
 
 message PutObjectResponse {
 	Object objMeta = 1;
-	string status = 2;
+	int32 errorCode = 2;
 	string md5 = 3;
 	string versionId = 4;
 	int64 lastModified = 5;
+}
+
+message CopyObjectResponse {
+    Object objMeta = 1;
+    string status = 2;
+    string md5 = 3;
+    string versionId = 4;
+    int64 lastModified = 5;
 }
 
 message PutBucketVersioningRequest {
@@ -283,6 +293,7 @@ message Bucket {
 	int64 usages = 16;
 	int32 tier = 17;
 	repeated ReplicationInfo replicationInfo = 18;
+	int64 updateTime = 19;
 }
 
 message Partion {
@@ -406,8 +417,8 @@ message DeleteObjectInput {
 
 message DeleteObjectOutput {
     int32 errorCode = 1;
-    bool deleteMarker = 3;
-    string versionId = 4;
+    bool deleteMarker = 2;
+    string versionId = 3;
 }
 
 message GetObjectInput {

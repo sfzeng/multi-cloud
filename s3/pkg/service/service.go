@@ -232,6 +232,16 @@ func loadDefaultTransition() error {
 	return nil
 }
 
+func validTier(tier int32) bool {
+	for _, v := range SupportedClasses {
+		if v.Tier == tier {
+			return true
+		}
+	}
+
+	return false
+}
+
 func loadUserDefinedTransition() error {
 	log.Info("user defined storage class is not supported now")
 	return fmt.Errorf("user defined storage class is not supported now")
@@ -354,12 +364,6 @@ func (s *s3Service) PostObject(ctx context.Context, in *pb.BaseRequest, out *pb.
 }
 
 func (s *s3Service) HeadObject(ctx context.Context, in *pb.BaseObjRequest, out *pb.Object) error {
-	log.Info("UpdateBucket is called in s3 service.")
-
-	return nil
-}
-
-func (s *s3Service) CopyObject(ctx context.Context, in *pb.CopyObjectRequest, out *pb.BaseResponse) error {
 	log.Info("UpdateBucket is called in s3 service.")
 
 	return nil
@@ -501,20 +505,6 @@ func (s *s3Service) AddUploadRecord(ctx context.Context, record *pb.MultipartUpl
 
 func (s *s3Service) DeleteUploadRecord(ctx context.Context, record *pb.MultipartUploadRecord, out *pb.BaseResponse) error {
 	log.Infof("delete multipart upload record")
-
-	return nil
-}
-
-func (s *s3Service) CountObjects(ctx context.Context, in *pb.ListObjectsRequest, out *pb.CountObjectsResponse) error {
-	log.Info("Count objects is called in s3 service.")
-
-	countInfo := ObjsCountInfo{}
-	/*err := db.DbAdapter.CountObjects(in, &countInfo)
-	if err.Code != ERR_OK {
-		return err.Error()
-	}*/
-	out.Count = countInfo.Count
-	out.Size = countInfo.Size
 
 	return nil
 }

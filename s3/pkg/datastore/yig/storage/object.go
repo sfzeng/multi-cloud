@@ -228,6 +228,11 @@ func (yig *YigStorage) Delete(ctx context.Context, object *pb.DeleteObjectInput)
 	return errors.New("not implemented.")
 }
 
+func (yig *YigStorage) ChangeStorageClass(ctx context.Context, object *pb.Object, newClass *string) error {
+	log.Errorf("change storage class[yig] is not supported.")
+	return ErrInternalError
+}
+
 /*
 * target: should contain BucketName, ObjectKey, Size, Etag
 *

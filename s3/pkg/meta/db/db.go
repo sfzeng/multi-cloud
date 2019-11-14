@@ -17,6 +17,7 @@ import (
 	"context"
 
 	. "github.com/opensds/multi-cloud/s3/pkg/meta/types"
+	"github.com/opensds/multi-cloud/s3/pkg/utils"
 )
 
 //DB Adapter Interface
@@ -41,10 +42,11 @@ type DBAdapter interface {
 	ListObjects(ctx context.Context, bucketName string, versioned bool, maxKeys int, filter map[string]string) (
 		retObjects []*Object, prefixes []string, truncated bool, nextMarker, nextVerIdMarker string, err error)
 
+	CountObjects(ctx context.Context, bucketName, prefix string) (rsp *utils.ObjsCountInfo, err error)
 	UpdateUsage(ctx context.Context, bucketName string, size int64, tx interface{}) error
 	UpdateUsages(ctx context.Context, usages map[string]int64, tx interface{}) error
 	ListBucketLifecycle(ctx context.Context) (bucket []*Bucket, err error)
-	
+
 	//gc
 	PutObjectToGarbageCollection(ctx context.Context, object *Object, tx interface{}) error
 }
