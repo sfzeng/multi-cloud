@@ -4,18 +4,21 @@ service S3 {
 	rpc ListBuckets(BaseRequest) returns (ListBucketsResponse) {}
 	rpc CreateBucket(Bucket) returns (BaseResponse) {}
 	rpc DeleteBucket(Bucket) returns (BaseResponse) {}
-	rpc GetBucket(Bucket) returns (Bucket) {}
+	rpc GetBucket(Bucket) returns (GetBucketResponse) {}
 	rpc ListObjects(ListObjectsRequest) returns (ListObjectsResponse) {}
 	rpc CountObjects(ListObjectsRequest) returns (CountObjectsResponse) {}
 	rpc PutObject(stream PutObjectRequest) returns (PutObjectResponse) {}
 	rpc UpdateObject(Object) returns (BaseResponse) {}
 	rpc GetObject(GetObjectInput) returns (Object) {}
-	rpc DeleteObject(DeleteObjectInput) returns (BaseResponse) {}
+	rpc DeleteObject(DeleteObjectInput) returns (DeleteObjectOutput) {}
 	rpc GetTierMap(BaseRequest) returns (GetTierMapResponse) {}
 	rpc UpdateObjMeta(UpdateObjMetaRequest) returns (BaseResponse) {}
 	rpc GetStorageClasses(BaseRequest) returns (GetStorageClassesResponse) {}
 	rpc GetBackendTypeByTier(GetBackendTypeByTierRequest) returns (GetBackendTypeByTierResponse) {}
-	rpc DeleteBucketLifecycle(DeleteLifecycleInput) returns (BaseResponse) {}
+	rpc DeleteBucketLifecycle(BaseRequest) returns (BaseResponse) {}
+	rpc PutBucketLifecycle(PutBucketLifecycleRequest) returns (BaseResponse) {}
+	rpc GetBucketLifecycle(BaseRequest) returns (GetBucketLifecycleResponse) {}
+	rpc ListBucketLifecycle(BaseRequest) returns (ListBucketsResponse) {}
 	rpc UpdateBucket(Bucket) returns (BaseResponse) {}
 	rpc ListBucketUploadRecords(ListBucketPartsRequest) returns (ListBucketPartsResponse) {}
 
@@ -225,6 +228,16 @@ message LifecycleRule {
 	AbortMultipartUpload abortIncompleteMultipartUpload = 5;
 }
 
+message PutBucketLifecycleRequest {
+	string bucketName = 1;
+	repeated LifecycleRule lc = 2;
+}
+
+message GetBucketLifecycleResponse {
+	int32 errorCode = 1;
+	repeated LifecycleRule lc = 2;
+}
+
 message ReplicationInfo {
 	string status = 1;
 	string backend = 2;
@@ -233,6 +246,11 @@ message ReplicationInfo {
 
 message Acl {
 	string cannedAcl = 1;
+}
+
+message GetBucketResponse {
+	int32 errorCode = 1;
+	Bucket bucketMeta = 2;
 }
 
 message Bucket {
@@ -375,6 +393,12 @@ message DeleteObjectInput {
     int64  lastModified = 5;
 }
 
+message DeleteObjectOutput {
+    int32 errorCode = 1;
+    bool deleteMarker = 3;
+    string versionId = 4;
+}
+
 message GetObjectInput {
     string Bucket = 1;
     string Key = 2;
@@ -431,11 +455,6 @@ message GetBackendTypeByTierRequest {
 
 message GetBackendTypeByTierResponse {
 	repeated string Types = 1;
-}
-
-message DeleteLifecycleInput {
-	string bucket = 1;
-	string ruleID = 2;
 }
 
 message MultipartUploadRecord {
