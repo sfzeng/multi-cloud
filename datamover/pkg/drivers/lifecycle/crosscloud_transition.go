@@ -49,16 +49,20 @@ func copyObj(obj *osdss3.Object, targetLoc *LocationInfo) error {
 
 	// copy object
 	ctx, _ := context.WithTimeout(context.Background(), CLOUD_OPR_TIMEOUT*time.Second)
-	ctx = metadata.NewContext(ctx, map[string]string{common.CTX_KEY_IS_ADMIN: strconv.FormatBool(true)})
-	req := &osdss3.CopyObjectRequest{
+	ctx = metadata.NewContext(ctx, map[string]string{
+		common.CTX_KEY_IS_ADMIN:  strconv.FormatBool(true),
+		common.CTX_KEY_TENANT_ID: INTERNAL_TENANT,
+	})
+	req := &osdss3.MoveObjectRequest{
 		SrcObject:      obj.ObjectKey,
 		SrcBucket:      obj.BucketName,
 		TargetLocation: targetLoc.BakendName,
 		TargetTier:     targetLoc.Tier,
-		CopyType:       utils.CopyType_ChangeLocation,
+		CopyType:       utils.MoveType_ChangeLocation,
+		SourceType:     utils.CopySourceType_Lifecycle,
 	}
 
-	_, err := s3client.CopyObject(ctx, req)
+	_, err := s3client.MoveObject(ctx, req)
 	if err != nil {
 		// if failed, it will try again in the next round schedule
 		log.Errorf("copy object[%s] failed, err:%\v", obj.ObjectKey, err)

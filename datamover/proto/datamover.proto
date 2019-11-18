@@ -44,7 +44,7 @@ message LifecycleActionRequest {
 	string sourceBackend = 6; // for transition and expiration
 	string targetBackend = 7; // for transition and abort incomplete multipart upload
 	int64 objSize = 8;  	  // for transition
-	int64 lastModified = 9;   // for transition and expiration
+	string versionId = 9;   // for transition and expiration
 	string uploadId = 10;     // only for abort incomplete multipart upload
 }
 

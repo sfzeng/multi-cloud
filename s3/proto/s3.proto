@@ -10,8 +10,8 @@ service S3 {
 	rpc CountObjects(ListObjectsRequest) returns (CountObjectsResponse) {}
 	rpc PutObject(stream PutObjectRequest) returns (PutObjectResponse) {}
 	rpc UpdateObject(Object) returns (BaseResponse) {}
-	rpc DeleteObject(DeleteObjectInput) returns (DeleteObjectOutput) {}
 	rpc GetObject(GetObjectInput) returns (stream GetObjectResponse) {}
+	rpc DeleteObject(DeleteObjectInput) returns (DeleteObjectOutput) {}
 	rpc GetTierMap(BaseRequest) returns (GetTierMapResponse) {}
 	rpc UpdateObjMeta(UpdateObjMetaRequest) returns (BaseResponse) {}
 	rpc GetStorageClasses(BaseRequest) returns (GetStorageClassesResponse) {}
@@ -36,7 +36,7 @@ service S3 {
 	rpc DeleteUploadRecord(MultipartUploadRecord) returns (BaseResponse) {}
 
 	rpc HeadObject(BaseObjRequest) returns (Object) {}
-	rpc CopyObject(CopyObjectRequest) returns (CopyObjectResponse) {}
+	rpc MoveObject(MoveObjectRequest) returns (MoveObjectResponse) {}
 	rpc CopyObjPart(CopyObjPartRequest) returns (CopyObjPartResponse) {}
 	rpc PutObjACL(PutObjACLRequest) returns (BaseResponse) {}
 	rpc GetObjACL(BaseObjRequest) returns (ObjACL) {}
@@ -54,7 +54,7 @@ service S3 {
 	rpc HeadBucket(BaseRequest) returns (Bucket) {}
 }
 
-message CopyObjectRequest {
+message MoveObjectRequest {
 	string srcObject = 1;
 	string targetObject = 2;
 	string srcBucket = 3;
@@ -62,6 +62,7 @@ message CopyObjectRequest {
 	string targetLocation = 5;
 	int32  targetTier = 6;
 	int32  copyType = 7;
+	int32  sourceType = 8; // lifecyce service, migration service, end user, etc.
 }
 
 message PutObjectRequest {
@@ -86,7 +87,7 @@ message PutObjectResponse {
 	int64 lastModified = 5;
 }
 
-message CopyObjectResponse {
+message MoveObjectResponse {
     Object objMeta = 1;
     string status = 2;
     string md5 = 3;
@@ -293,7 +294,6 @@ message Bucket {
 	int64 usages = 16;
 	int32 tier = 17;
 	repeated ReplicationInfo replicationInfo = 18;
-	int64 updateTime = 19;
 }
 
 message Partion {
@@ -412,7 +412,9 @@ message DeleteObjectInput {
     string bucket = 1;
     string key = 2;
     string versioId = 3;
-    int64  lastModified = 5;
+    string storageMeta = 4;
+    string eTag = 5;
+    string objectId = 6;
 }
 
 message DeleteObjectOutput {

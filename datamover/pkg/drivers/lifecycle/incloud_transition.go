@@ -56,11 +56,12 @@ func doInCloudTransition(acReq *datamover.LifecycleActionRequest) error {
 
 	log.Infof("in-cloud transition of object[%s], bucket:%v, target tier:%d\n", acReq.ObjKey, acReq.BucketName,
 		acReq.TargetTier)
-	req := &osdss3.CopyObjectRequest{
+	req := &osdss3.MoveObjectRequest{
 		SrcObject:  acReq.ObjKey,
 		SrcBucket:  acReq.BucketName,
 		TargetTier: acReq.TargetTier,
-		CopyType:   utils.CopyType_ChangeStorageTier,
+		CopyType:   utils.MoveType_ChangeStorageTier,
+		SourceType: utils.CopySourceType_Lifecycle,
 	}
 
 	// add object to InProgressObjs
@@ -72,8 +73,11 @@ func doInCloudTransition(acReq *datamover.LifecycleActionRequest) error {
 	}
 
 	ctx, _ := context.WithTimeout(context.Background(), CLOUD_OPR_TIMEOUT*time.Second)
-	ctx = metadata.NewContext(ctx, map[string]string{common.CTX_KEY_IS_ADMIN: strconv.FormatBool(true)})
-	_, err := s3client.CopyObject(ctx, req)
+	ctx = metadata.NewContext(ctx, map[string]string{
+		common.CTX_KEY_IS_ADMIN:  strconv.FormatBool(true),
+		common.CTX_KEY_TENANT_ID: INTERNAL_TENANT,
+	})
+	_, err := s3client.MoveObject(ctx, req)
 	if err != nil {
 		// if failed, it will try again in the next round schedule
 		log.Errorf("in-cloud transition of %s failed:%v\n", acReq.ObjKey, err)

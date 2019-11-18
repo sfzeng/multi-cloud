@@ -17,30 +17,33 @@ package lifecycle
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strconv"
+	"sync"
+	"time"
+
 	"github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/metadata"
 	"github.com/opensds/multi-cloud/api/pkg/common"
+	"github.com/opensds/multi-cloud/api/pkg/utils/constants"
 	"github.com/opensds/multi-cloud/dataflow/pkg/db"
 	"github.com/opensds/multi-cloud/dataflow/pkg/kafka"
 	. "github.com/opensds/multi-cloud/dataflow/pkg/model"
 	. "github.com/opensds/multi-cloud/dataflow/pkg/utils"
 	"github.com/opensds/multi-cloud/datamover/proto"
+	"github.com/opensds/multi-cloud/s3/error"
 	s3utils "github.com/opensds/multi-cloud/s3/pkg/utils"
 	"github.com/opensds/multi-cloud/s3/proto"
 	osdss3 "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
-	"sort"
-	"strconv"
-	"sync"
-	"time"
 )
 
 var topicLifecycle = "lifecycle"
 var s3client = osdss3.NewS3Service("s3", client.DefaultClient)
 
 const TIME_LAYOUT_TIDB = "2006-01-02 15:04:05"
-const INTERNAL_USER = "internal user"
+const INTERNAL_TENANT = "internal tenant"
 
 type InterRules []*InternalLifecycleRule
 
@@ -84,8 +87,8 @@ func ScheduleLifecycle() {
 
 	// List buckets with lifecycle configured.
 	ctx := metadata.NewContext(context.Background(), map[string]string{
-		common.CTX_KEY_IS_ADMIN: strconv.FormatBool(true),
-		common.CTX_KEY_USER_ID:  INTERNAL_USER,
+		common.CTX_KEY_IS_ADMIN:  strconv.FormatBool(true),
+		common.CTX_KEY_TENANT_ID: INTERNAL_TENANT,
 	})
 	listRsp, err := s3client.ListBucketLifecycle(ctx, &s3.BaseRequest{})
 	if err != nil {
@@ -217,7 +220,7 @@ func getObjects(r *InternalLifecycleRule, marker string, limit int32) ([]*osdss3
 
 	log.Infof("The filter: %+v\n", filt)
 	s3req := osdss3.ListObjectsRequest{
-		Version:    2,
+		Version:    constants.ListObjectsType2Int,
 		Bucket:     r.Bucket,
 		Filter:     filt,
 		StartAfter: marker,
@@ -227,12 +230,13 @@ func getObjects(r *InternalLifecycleRule, marker string, limit int32) ([]*osdss3
 		s3req.Prefix = r.Filter.Prefix
 	}
 	ctx := metadata.NewContext(context.Background(), map[string]string{
-		common.CTX_KEY_IS_ADMIN: strconv.FormatBool(true),
-		common.CTX_KEY_USER_ID:  INTERNAL_USER,
+		common.CTX_KEY_IS_ADMIN:  strconv.FormatBool(true),
+		common.CTX_KEY_TENANT_ID: INTERNAL_TENANT,
 	})
 	log.Infof("ListObjectsRequest:%+v\n", s3req)
+	log.Infof("777777777777777ctx:%+v\n", ctx)
 	s3rsp, err := s3client.ListObjects(ctx, &s3req)
-	if err != nil {
+	if err != nil || s3rsp.ErrorCode != int32(s3error.ErrNoErr) {
 		log.Errorf("list objects failed, req:%+v,  err:%v.\n", s3req, err)
 		return nil, err
 	}
@@ -244,6 +248,7 @@ func schedSortedActionsRules(inRules *InterRules) {
 	log.Info("schedSortedActionsRules begin ...")
 	dupCheck := map[string]struct{}{}
 	for _, r := range *inRules {
+		log.Debugf("rule: %v\n", r)
 		var marker string
 		var limit int32 = 1000
 		for {
@@ -251,7 +256,9 @@ func schedSortedActionsRules(inRules *InterRules) {
 			if err != nil {
 				break
 			}
+			log.Debugf("objects count: %d\n", len(objs))
 			for _, obj := range objs {
+				log.Debugf("obj: %d\n", obj)
 				if obj.DeleteMarker == true {
 					log.Infof("deleteMarker of object[%s] is set, no lifecycle action need.\n", obj.ObjectKey)
 					continue
@@ -305,7 +312,7 @@ func schedSortedActionsRules(inRules *InterRules) {
 						SourceBackend: obj.Location,
 						TargetBackend: r.Backend,
 						ObjSize:       obj.Size,
-						LastModified:  obj.LastModified,
+						VersionId:     obj.VersionId,
 					}
 
 					// If send failed, then ignore it, because it will be re-sent in the next schedule period.

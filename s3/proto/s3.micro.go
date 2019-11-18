@@ -8,12 +8,12 @@ It is generated from these files:
 	s3.proto
 
 It has these top-level messages:
-	CopyObjectRequest
+	MoveObjectRequest
 	PutObjectRequest
 	GetObjectResponse
 	GetObjectMetaResult
 	PutObjectResponse
-	CopyObjectResponse
+	MoveObjectResponse
 	PutBucketVersioningRequest
 	PutBucketACLRequest
 	BucketACL
@@ -111,8 +111,8 @@ type S3Service interface {
 	CountObjects(ctx context.Context, in *ListObjectsRequest, opts ...client.CallOption) (*CountObjectsResponse, error)
 	PutObject(ctx context.Context, opts ...client.CallOption) (S3_PutObjectService, error)
 	UpdateObject(ctx context.Context, in *Object, opts ...client.CallOption) (*BaseResponse, error)
-	DeleteObject(ctx context.Context, in *DeleteObjectInput, opts ...client.CallOption) (*DeleteObjectOutput, error)
 	GetObject(ctx context.Context, in *GetObjectInput, opts ...client.CallOption) (S3_GetObjectService, error)
+	DeleteObject(ctx context.Context, in *DeleteObjectInput, opts ...client.CallOption) (*DeleteObjectOutput, error)
 	GetTierMap(ctx context.Context, in *BaseRequest, opts ...client.CallOption) (*GetTierMapResponse, error)
 	UpdateObjMeta(ctx context.Context, in *UpdateObjMetaRequest, opts ...client.CallOption) (*BaseResponse, error)
 	GetStorageClasses(ctx context.Context, in *BaseRequest, opts ...client.CallOption) (*GetStorageClassesResponse, error)
@@ -134,7 +134,7 @@ type S3Service interface {
 	AddUploadRecord(ctx context.Context, in *MultipartUploadRecord, opts ...client.CallOption) (*BaseResponse, error)
 	DeleteUploadRecord(ctx context.Context, in *MultipartUploadRecord, opts ...client.CallOption) (*BaseResponse, error)
 	HeadObject(ctx context.Context, in *BaseObjRequest, opts ...client.CallOption) (*Object, error)
-	CopyObject(ctx context.Context, in *CopyObjectRequest, opts ...client.CallOption) (*CopyObjectResponse, error)
+	MoveObject(ctx context.Context, in *MoveObjectRequest, opts ...client.CallOption) (*MoveObjectResponse, error)
 	CopyObjPart(ctx context.Context, in *CopyObjPartRequest, opts ...client.CallOption) (*CopyObjPartResponse, error)
 	PutObjACL(ctx context.Context, in *PutObjACLRequest, opts ...client.CallOption) (*BaseResponse, error)
 	GetObjACL(ctx context.Context, in *BaseObjRequest, opts ...client.CallOption) (*ObjACL, error)
@@ -286,16 +286,6 @@ func (c *s3Service) UpdateObject(ctx context.Context, in *Object, opts ...client
 	return out, nil
 }
 
-func (c *s3Service) DeleteObject(ctx context.Context, in *DeleteObjectInput, opts ...client.CallOption) (*DeleteObjectOutput, error) {
-	req := c.c.NewRequest(c.name, "S3.DeleteObject", in)
-	out := new(DeleteObjectOutput)
-	err := c.c.Call(ctx, req, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *s3Service) GetObject(ctx context.Context, in *GetObjectInput, opts ...client.CallOption) (S3_GetObjectService, error) {
 	req := c.c.NewRequest(c.name, "S3.GetObject", &GetObjectInput{})
 	stream, err := c.c.Stream(ctx, req, opts...)
@@ -338,6 +328,16 @@ func (x *s3ServiceGetObject) Recv() (*GetObjectResponse, error) {
 		return nil, err
 	}
 	return m, nil
+}
+
+func (c *s3Service) DeleteObject(ctx context.Context, in *DeleteObjectInput, opts ...client.CallOption) (*DeleteObjectOutput, error) {
+	req := c.c.NewRequest(c.name, "S3.DeleteObject", in)
+	out := new(DeleteObjectOutput)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *s3Service) GetTierMap(ctx context.Context, in *BaseRequest, opts ...client.CallOption) (*GetTierMapResponse, error) {
@@ -540,9 +540,9 @@ func (c *s3Service) HeadObject(ctx context.Context, in *BaseObjRequest, opts ...
 	return out, nil
 }
 
-func (c *s3Service) CopyObject(ctx context.Context, in *CopyObjectRequest, opts ...client.CallOption) (*CopyObjectResponse, error) {
-	req := c.c.NewRequest(c.name, "S3.CopyObject", in)
-	out := new(CopyObjectResponse)
+func (c *s3Service) MoveObject(ctx context.Context, in *MoveObjectRequest, opts ...client.CallOption) (*MoveObjectResponse, error) {
+	req := c.c.NewRequest(c.name, "S3.MoveObject", in)
+	out := new(MoveObjectResponse)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -712,8 +712,8 @@ type S3Handler interface {
 	CountObjects(context.Context, *ListObjectsRequest, *CountObjectsResponse) error
 	PutObject(context.Context, S3_PutObjectStream) error
 	UpdateObject(context.Context, *Object, *BaseResponse) error
-	DeleteObject(context.Context, *DeleteObjectInput, *DeleteObjectOutput) error
 	GetObject(context.Context, *GetObjectInput, S3_GetObjectStream) error
+	DeleteObject(context.Context, *DeleteObjectInput, *DeleteObjectOutput) error
 	GetTierMap(context.Context, *BaseRequest, *GetTierMapResponse) error
 	UpdateObjMeta(context.Context, *UpdateObjMetaRequest, *BaseResponse) error
 	GetStorageClasses(context.Context, *BaseRequest, *GetStorageClassesResponse) error
@@ -735,7 +735,7 @@ type S3Handler interface {
 	AddUploadRecord(context.Context, *MultipartUploadRecord, *BaseResponse) error
 	DeleteUploadRecord(context.Context, *MultipartUploadRecord, *BaseResponse) error
 	HeadObject(context.Context, *BaseObjRequest, *Object) error
-	CopyObject(context.Context, *CopyObjectRequest, *CopyObjectResponse) error
+	MoveObject(context.Context, *MoveObjectRequest, *MoveObjectResponse) error
 	CopyObjPart(context.Context, *CopyObjPartRequest, *CopyObjPartResponse) error
 	PutObjACL(context.Context, *PutObjACLRequest, *BaseResponse) error
 	GetObjACL(context.Context, *BaseObjRequest, *ObjACL) error
@@ -764,8 +764,8 @@ func RegisterS3Handler(s server.Server, hdlr S3Handler, opts ...server.HandlerOp
 		CountObjects(ctx context.Context, in *ListObjectsRequest, out *CountObjectsResponse) error
 		PutObject(ctx context.Context, stream server.Stream) error
 		UpdateObject(ctx context.Context, in *Object, out *BaseResponse) error
-		DeleteObject(ctx context.Context, in *DeleteObjectInput, out *DeleteObjectOutput) error
 		GetObject(ctx context.Context, stream server.Stream) error
+		DeleteObject(ctx context.Context, in *DeleteObjectInput, out *DeleteObjectOutput) error
 		GetTierMap(ctx context.Context, in *BaseRequest, out *GetTierMapResponse) error
 		UpdateObjMeta(ctx context.Context, in *UpdateObjMetaRequest, out *BaseResponse) error
 		GetStorageClasses(ctx context.Context, in *BaseRequest, out *GetStorageClassesResponse) error
@@ -786,7 +786,7 @@ func RegisterS3Handler(s server.Server, hdlr S3Handler, opts ...server.HandlerOp
 		AddUploadRecord(ctx context.Context, in *MultipartUploadRecord, out *BaseResponse) error
 		DeleteUploadRecord(ctx context.Context, in *MultipartUploadRecord, out *BaseResponse) error
 		HeadObject(ctx context.Context, in *BaseObjRequest, out *Object) error
-		CopyObject(ctx context.Context, in *CopyObjectRequest, out *CopyObjectResponse) error
+		MoveObject(ctx context.Context, in *MoveObjectRequest, out *MoveObjectResponse) error
 		CopyObjPart(ctx context.Context, in *CopyObjPartRequest, out *CopyObjPartResponse) error
 		PutObjACL(ctx context.Context, in *PutObjACLRequest, out *BaseResponse) error
 		GetObjACL(ctx context.Context, in *BaseObjRequest, out *ObjACL) error
@@ -881,10 +881,6 @@ func (h *s3Handler) UpdateObject(ctx context.Context, in *Object, out *BaseRespo
 	return h.S3Handler.UpdateObject(ctx, in, out)
 }
 
-func (h *s3Handler) DeleteObject(ctx context.Context, in *DeleteObjectInput, out *DeleteObjectOutput) error {
-	return h.S3Handler.DeleteObject(ctx, in, out)
-}
-
 func (h *s3Handler) GetObject(ctx context.Context, stream server.Stream) error {
 	m := new(GetObjectInput)
 	if err := stream.Recv(m); err != nil {
@@ -918,6 +914,10 @@ func (x *s3GetObjectStream) RecvMsg(m interface{}) error {
 
 func (x *s3GetObjectStream) Send(m *GetObjectResponse) error {
 	return x.stream.Send(m)
+}
+
+func (h *s3Handler) DeleteObject(ctx context.Context, in *DeleteObjectInput, out *DeleteObjectOutput) error {
+	return h.S3Handler.DeleteObject(ctx, in, out)
 }
 
 func (h *s3Handler) GetTierMap(ctx context.Context, in *BaseRequest, out *GetTierMapResponse) error {
@@ -1000,8 +1000,8 @@ func (h *s3Handler) HeadObject(ctx context.Context, in *BaseObjRequest, out *Obj
 	return h.S3Handler.HeadObject(ctx, in, out)
 }
 
-func (h *s3Handler) CopyObject(ctx context.Context, in *CopyObjectRequest, out *CopyObjectResponse) error {
-	return h.S3Handler.CopyObject(ctx, in, out)
+func (h *s3Handler) MoveObject(ctx context.Context, in *MoveObjectRequest, out *MoveObjectResponse) error {
+	return h.S3Handler.MoveObject(ctx, in, out)
 }
 
 func (h *s3Handler) CopyObjPart(ctx context.Context, in *CopyObjPartRequest, out *CopyObjPartResponse) error {

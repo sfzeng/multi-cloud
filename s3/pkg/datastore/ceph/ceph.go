@@ -213,7 +213,7 @@ func (ad *CephAdapter) CompleteMultipartUpload(ctx context.Context, multipartUpl
 	cephObject := bucket.NewObject(ad.backend.BucketName)
 	uploader := cephObject.NewUploads(multipartUpload.ObjectId)
 	var completeParts []CompletePart
-	for _, p := range completeUpload.Part {
+	for _, p := range completeUpload.Parts {
 		completePart := CompletePart{
 			Etag:       p.ETag,
 			PartNumber: int(p.PartNumber),

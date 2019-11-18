@@ -293,7 +293,7 @@ func (ad *AzureAdapter) CompleteMultipartUpload(ctx context.Context, multipartUp
 
 	blobURL := ad.containerURL.NewBlockBlobURL(multipartUpload.ObjectId)
 	var completeParts []string
-	for _, p := range completeUpload.Part {
+	for _, p := range completeUpload.Parts {
 		base64ID := ad.Int64ToBase64(p.PartNumber)
 		completeParts = append(completeParts, base64ID)
 	}

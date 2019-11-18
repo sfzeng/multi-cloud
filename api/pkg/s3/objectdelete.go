@@ -29,7 +29,7 @@ func (s *APIService) ObjectDelete(request *restful.Request, response *restful.Re
 	bucketName := request.PathParameter("bucketName")
 	objectName := request.PathParameter("objectKey")
 	version := url.Query().Get("versionId")
-	if strings.HasSuffix(url.String(), "/") {
+	if strings.HasSuffix(url.String(), "/") { // This is for folder.
 		objectName = objectName + "/"
 	}
 

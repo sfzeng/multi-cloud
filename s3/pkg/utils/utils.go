@@ -92,12 +92,24 @@ const (
 	VersioningDisabled  = "Disabled"
 	VersioningSuspended = "Suspended"
 )
+
+type ListObjsAppendInfo struct {
+	Prefixes   []string
+	Truncated  bool
+	NextMarker string
+}
+
 const (
-	CopyType_Invalid = iota
-	CopyType_UpdateMeta
-	CopyType_CopyCrossBuckets
-	CopyType_ChangeLocation
-	CopyType_ChangeStorageTier
+	MoveType_Invalid = iota
+	MoveType_MoveCrossBuckets
+	MoveType_ChangeLocation
+	MoveType_ChangeStorageTier
+)
+
+const (
+	CopySourceType_EndUser = iota
+	CopySourceType_Lifecycle
+	CopySourceType_Migration
 )
 
 func Md5Content(data []byte) string {

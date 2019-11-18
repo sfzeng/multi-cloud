@@ -152,7 +152,6 @@ func (ad *AwsAdapter) Get(ctx context.Context, object *pb.Object, start int64, e
 	}
 
 	log.Infof("get object[AWS S3] succeed, objectId:%s, numBytes:%d\n", objectId, numBytes)
-	log.Infof("writer.Bytes() is %v \n", writer.Bytes())
 	body := bytes.NewReader(writer.Bytes())
 	ioReaderClose := ioutil.NopCloser(body)
 
@@ -305,7 +304,7 @@ func (ad *AwsAdapter) CompleteMultipartUpload(ctx context.Context, multipartUplo
 	log.Infof("complete multipart upload[AWS S3], bucket:%s, objectId:%s.\n", bucket, multipartUpload.ObjectId)
 
 	var completeParts []*awss3.CompletedPart
-	for _, p := range completeUpload.Part {
+	for _, p := range completeUpload.Parts {
 		completePart := &awss3.CompletedPart{
 			ETag:       aws.String(p.ETag),
 			PartNumber: aws.Int64(p.PartNumber),

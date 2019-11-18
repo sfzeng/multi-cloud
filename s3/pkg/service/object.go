@@ -303,14 +303,18 @@ func (s *s3Service) GetObject(ctx context.Context, req *pb.GetObjectInput, strea
 		return err
 	}
 
-	/*bucket, err := s.MetaStorage.GetBucket(ctx, bucketName, true)
+	bucket, err := s.MetaStorage.GetBucket(ctx, bucketName, true)
 	if err != nil {
 		log.Errorln("failed to get bucket from meta storage. err:", err)
 		return err
-	}*/
+	}
 
+	backendName := bucket.DefaultLocation
+	if object.Location != "" {
+		backendName = object.Location
+	}
 	// if this object has only one part
-	backend, err := getBackend(ctx, s.backendClient, object.Location)
+	backend, err := getBackend(ctx, s.backendClient, backendName)
 	if err != nil {
 		log.Errorln("unable to get backend. err:", err)
 		return err
@@ -318,7 +322,7 @@ func (s *s3Service) GetObject(ctx context.Context, req *pb.GetObjectInput, strea
 	sd, err := driver.CreateStorageDriver(backend.Type, backend)
 	if err != nil {
 		log.Errorln("failed to create storage driver. err:", err)
-		return nil
+		return err
 	}
 	log.Infof("get object offset %v, length %v", offset, length)
 	reader, err := sd.Get(ctx, object.Object, offset, offset+length-1)
@@ -336,11 +340,19 @@ func (s *s3Service) GetObject(ctx context.Context, req *pb.GetObjectInput, strea
 			log.Errorln("failed to read, err:", err)
 			break
 		}
+		// From https://golang.org/pkg/io/, a Reader returning a non-zero number of bytes at the end of the input stream
+		// may return either err == EOF or err == nil. The next Read should return 0, EOF.
+		// If err is equal to io.EOF, a non-zero number of bytes may be returned.
 		if err == io.EOF {
 			log.Debugln("finished read")
 			eof = true
 		}
+		// From https://golang.org/pkg/io/, there is the following statement.
+		// Implementations of Read are discouraged from returning a zero byte count with a nil error, except when len(p) ==
+		// 0. Callers should treat a return of 0 and nil as indicating that nothing happened; in particular it does not indicate EOF.
+		// If n is equal 0, it indicate that there is no more data to read
 		if n == 0 {
+			log.Infoln("reader return zero bytes.")
 			break
 		}
 
@@ -356,15 +368,15 @@ func (s *s3Service) GetObject(ctx context.Context, req *pb.GetObjectInput, strea
 	return nil
 }
 
-func (s *s3Service) CopyObject(ctx context.Context, in *pb.CopyObjectRequest, out *pb.CopyObjectResponse) error {
-	log.Infoln("CopyObject is called in s3 service.")
+func (s *s3Service) MoveObject(ctx context.Context, in *pb.MoveObjectRequest, out *pb.MoveObjectResponse) error {
+	log.Infoln("MoveObject is called in s3 service.")
 	md, ok := metadata.FromContext(ctx)
 	if !ok {
 		log.Error("get metadata from ctx failed.")
 		return ErrInternalError
 	}
 
-	err := s.checkCopyRequest(ctx, in)
+	err := s.checkMoveRequest(ctx, in)
 	if err != nil {
 		return err
 	}
@@ -388,6 +400,7 @@ func (s *s3Service) CopyObject(ctx context.Context, in *pb.CopyObjectRequest, ou
 		LastModified:         time.Now().UTC().Unix(),
 		ContentType:          srcObject.ContentType,
 		ServerSideEncryption: srcObject.ServerSideEncryption,
+		Acl:                  srcObject.Acl,
 		Type:                 meta.ObjectTypeNormal,
 		DeleteMarker:         false,
 		CustomAttributes:     md, /* TODO: only reserve http header attr*/
@@ -396,6 +409,11 @@ func (s *s3Service) CopyObject(ctx context.Context, in *pb.CopyObjectRequest, ou
 	if ok {
 		targetObject.TenantId = tenantId
 	}
+	if in.SourceType == utils.CopySourceType_Lifecycle {
+		targetObject.LastModified = srcObject.LastModified
+		targetObject.TenantId = srcObject.TenantId
+	}
+
 	if in.TargetTier > 0 {
 		targetObject.Tier = in.TargetTier
 	}
@@ -407,116 +425,145 @@ func (s *s3Service) CopyObject(ctx context.Context, in *pb.CopyObjectRequest, ou
 		log.Errorf("get source bucket[%s] failed with err:%v", in.SrcBucket, err)
 		return err
 	}
-	if in.CopyType != utils.CopyType_UpdateMeta {
-		srcBackend, err := getBackend(ctx, s.backendClient, srcObject.Location)
+
+	srcBackend, err := getBackend(ctx, s.backendClient, srcObject.Location)
+	if err != nil {
+		log.Errorln("failed to get backend client with err:", err)
+		return err
+	}
+	srcSd, err = driver.CreateStorageDriver(srcBackend.Type, srcBackend)
+	if err != nil {
+		log.Errorln("failed to create storage. err:", err)
+		return err
+	}
+
+	if in.CopyType == utils.MoveType_ChangeStorageTier {
+		log.Infof("chagne storage class of %s\n", targetObject.ObjectKey)
+		// just change storage tier
+		targetBucket = srcBucket
+		className, err := GetNameFromTier(in.TargetTier, srcBackend.Type)
+		if err != nil {
+			return ErrInternalError
+		}
+		err = srcSd.ChangeStorageClass(ctx, targetObject, &className)
+		if err != nil {
+			log.Errorf("change storage class of object[%s] failed, err:%v\n", targetObject.ObjectKey, err)
+			return err
+		}
+		// TODO: update storage class in meta
+		newObj := &meta.Object{Object: targetObject}
+		err = s.MetaStorage.UpdateObject(ctx, srcObject, newObj)
+	} else {
+		// need move data, get target location first
+		if in.CopyType == utils.MoveType_ChangeLocation {
+			targetBucket = srcBucket
+			targetObject.Location = in.TargetLocation
+			log.Infof("move %s cross backends, srcBackend=%s, targetBackend=%s, targetTier=%d\n",
+				srcObject.ObjectKey, srcObject.Location, targetObject.Location, targetObject.Tier)
+		} else { // CopyType_CopyCrossBuckets
+			log.Infof("move %s from bucket[%s] to bucket[%s]\n", targetObject.ObjectKey, srcObject.BucketName,
+				targetObject.BucketName)
+			targetBucket, err = s.MetaStorage.GetBucket(ctx, in.TargetBucket, true)
+			if err != nil {
+				log.Errorf("get bucket[%s] failed with err:%v\n", in.TargetBucket, err)
+				return err
+			}
+			targetObject.ObjectKey = in.TargetObject
+			targetObject.Location = targetBucket.DefaultLocation
+			targetObject.BucketName = targetBucket.Name
+			log.Infof("move %s cross buckets, targetBucket=%s, targetBackend=%s, targetTier=%d\n",
+				srcObject.ObjectKey, targetObject.BucketName, targetObject.Location, targetObject.Tier)
+		}
+
+		// get storage driver
+		targetBackend, err := getBackend(ctx, s.backendClient, targetObject.Location)
 		if err != nil {
 			log.Errorln("failed to get backend client with err:", err)
 			return err
 		}
-		srcSd, err = driver.CreateStorageDriver(srcBackend.Type, srcBackend)
+		targetSd, err = driver.CreateStorageDriver(targetBackend.Type, targetBackend)
 		if err != nil {
 			log.Errorln("failed to create storage. err:", err)
 			return err
 		}
 
-		if in.CopyType == utils.CopyType_ChangeStorageTier {
-			log.Infof("chagne storage class of %s\n", targetObject.ObjectKey)
-			// just change storage tier
-			targetBucket = srcBucket
-			className, err := GetNameFromTier(in.TargetTier, srcBackend.Type)
-			if err != nil {
-				return ErrInternalError
-			}
-			err = srcSd.ChangeStorageClass(ctx, targetObject, &className)
-			if err != nil {
-				log.Errorf("change storage class of object[%s] failed, err:%v\n", targetObject.ObjectKey, err)
-				return err
-			}
-			// change storage tier
-		} else {
-			// need move data, get target location first
-			if in.CopyType == utils.CopyType_ChangeLocation {
-				targetBucket = srcBucket
-				targetObject.Location = in.TargetLocation
-				log.Infof("copy %s cross backends, srcBackend=%s, targetBackend=%s, targetTier=%d\n",
-					srcObject.ObjectKey, srcObject.Location, targetObject.Location, targetObject.Tier)
-			} else { // CopyType_CopyCrossBuckets
-				log.Infof("copy %s from bucket[%s] to bucket[%s]\n", targetObject.ObjectKey, srcObject.BucketName,
-					targetObject.BucketName)
-				targetBucket, err = s.MetaStorage.GetBucket(ctx, in.TargetBucket, true)
-				if err != nil {
-					log.Errorf("get bucket[%s] failed with err:%v\n", in.TargetBucket, err)
-					return err
-				}
-				targetObject.ObjectKey = in.TargetObject
-				targetObject.Location = targetBucket.DefaultLocation
-				targetObject.BucketName = targetBucket.Name
-				log.Infof("copy %s cross buckets, targetBucket=%s, targetBackend=%s, targetTier=%d\n",
-					srcObject.ObjectKey, targetObject.BucketName, targetObject.Location, targetObject.Tier)
-			}
-
-			// get storage driver
-			targetBackend, err := getBackend(ctx, s.backendClient, targetObject.Location)
-			if err != nil {
-				log.Errorln("failed to get backend client with err:", err)
-				return err
-			}
-			targetSd, err = driver.CreateStorageDriver(targetBackend.Type, targetBackend)
-			if err != nil {
-				log.Errorln("failed to create storage. err:", err)
-				return err
-			}
-
-			// move data
-			log.Infof("move object")
-			reader, err := srcSd.Get(ctx, srcObject.Object, 0, srcObject.Size)
-			if err != nil {
-				log.Errorln("failed to get data. err:", err)
-				return err
-			}
-			limitedDataReader := io.LimitReader(reader, srcObject.Size)
-			res, err := targetSd.Put(ctx, limitedDataReader, targetObject)
-			if err != nil {
-				log.Errorln("failed to put data. err:", err)
-				return err
-			}
-			log.Infoln("Successfully copy ", res.Written, " bytes.")
-
-			// update metadata
-			targetObject.Etag = res.Etag
-			targetObject.ObjectId = res.ObjectId
-			targetObject.StorageMeta = res.Meta
+		// steps of moving object data: add target object for gc -> copy data -> update meta(remove target object from
+		// gc, update object to be the target one, and add source object for gc in a transaction) -> delete source
+		// object data from backend-> delete source object from gc. If crash happened, gc service will clean data.
+		// step 1: add new object for gc
+		newObj := &meta.Object{Object: targetObject}
+		err = s.MetaStorage.AddGcobjRecord(ctx, newObj)
+		if err != nil {
+			log.Errorf("failed to add gcobj record[%v], err:%v", newObj, err)
+			// if delete failed, no error return, because gc will clean it
+			ierr := s.MetaStorage.DeleteGcobjRecord(ctx, newObj)
+			log.Infof("delete source object from gc finished, err:", ierr)
+			return err
 		}
-	} else {
-		err = ErrNotImplemented
-		log.Errorf("not implemented")
+		// step 2: copy data
+		err = s.copyData(ctx, srcSd, targetSd, srcObject.Object, targetObject)
+		if err != nil {
+			log.Errorf("failed to copy object[%s], err:%v", srcObject.ObjectKey, err)
+			return err
+		}
+		out.Md5 = targetObject.Etag
+		out.LastModified = targetObject.LastModified
+		// step 3: update meta data
+		err = s.MetaStorage.UpdateMetaAfterCopy(ctx, srcObject, newObj)
+		if err != nil {
+			log.Errorln("failed to update meta data after copy, err:", err)
+			// clean target object data from backend, if failed, gc will clean
+			ierr := targetSd.Delete(ctx, &pb.DeleteObjectInput{Bucket: targetObject.BucketName, Key: targetObject.ObjectKey})
+			if ierr != nil {
+				// if delete failed, no error return, because gc will clean it
+				ierr = s.MetaStorage.DeleteGcobjRecord(ctx, newObj)
+				log.Infof("delete source object from gc finished, err:", ierr)
+			}
+			return err
+		}
+		// step 4: delete old data from backend storage
+		err = srcSd.Delete(ctx, &pb.DeleteObjectInput{Bucket: srcObject.BucketName, Key: srcObject.ObjectKey})
+		if err != nil {
+			log.Warnln("delete source object failed, err:", err)
+			// if delete failed, no error return, because gc will clean it
+			return nil
+		}
+		// step 5: delete from gc
+		err = s.MetaStorage.DeleteGcobjRecord(ctx, srcObject)
+		if err != nil {
+			// if delete failed, no error return, because gc will clean it
+			log.Warnln("delete source object from gc failed, err:", err)
+		}
 	}
 
-	object := &meta.Object{Object: targetObject}
-	_, err = s.checkOldObject(ctx, object.BucketName, object.ObjectKey, targetBucket.Versioning)
-	if err != nil {
-		log.Errorf("check old object failed: %v\n", err)
-		return err
-	}
-	err = s.MetaStorage.PutObject(ctx, object, nil, nil, true)
-	if err != nil {
-		log.Errorln("failed to put object meta. err:", err)
-		//RecycleQueue <- maybeObjectToRecycle
-		return err
-	}
-	if err == nil {
-		// TODO: enable cache
-		//b.MetaStorage.Cache.Remove(redis.ObjectTable, obj.OBJECT_CACHE_PREFIX, bucketName+":"+objectKey+":")
-		//b.DataCache.Remove(bucketName + ":" + objectKey + ":" + object.GetVersionId())
-	}
-
-	out.Md5 = targetObject.Etag
-	out.LastModified = targetObject.LastModified
+	log.Infoln("MoveObject is finished.")
 
 	return nil
 }
 
-func (s *s3Service) checkCopyRequest(ctx context.Context, in *pb.CopyObjectRequest) (err error) {
+func (s *s3Service) copyData(ctx context.Context, srcSd, targetSd driver.StorageDriver, srcObj, targetObj *pb.Object) error {
+	log.Infof("copy object data")
+	reader, err := srcSd.Get(ctx, srcObj, 0, srcObj.Size)
+	if err != nil {
+		log.Errorln("failed to get data. err:", err)
+		return err
+	}
+	limitedDataReader := io.LimitReader(reader, srcObj.Size)
+	res, err := targetSd.Put(ctx, limitedDataReader, targetObj)
+	if err != nil {
+		log.Errorln("failed to put data. err:", err)
+		return err
+	}
+	log.Infoln("Successfully copy ", res.Written, " bytes.")
+
+	targetObj.Etag = res.Etag
+	targetObj.ObjectId = res.ObjectId
+	targetObj.StorageMeta = res.Meta
+
+	return nil
+}
+
+func (s *s3Service) checkMoveRequest(ctx context.Context, in *pb.MoveObjectRequest) (err error) {
 	log.Infoln("check copy request")
 
 	if in.SrcBucket == "" || in.SrcObject == "" {
@@ -526,12 +573,12 @@ func (s *s3Service) checkCopyRequest(ctx context.Context, in *pb.CopyObjectReque
 	}
 
 	switch in.CopyType {
-	case utils.CopyType_ChangeStorageTier:
+	case utils.MoveType_ChangeStorageTier:
 		if !validTier(in.TargetTier) {
 			log.Error("cannot copy object to it's self.")
 			err = ErrInvalidCopyDest
 		}
-	case utils.CopyType_ChangeLocation:
+	case utils.MoveType_ChangeLocation:
 		if in.TargetLocation == "" {
 			log.Errorf("no target lcoation provided for change location copy")
 			err = ErrInvalidCopyDest
@@ -543,7 +590,7 @@ func (s *s3Service) checkCopyRequest(ctx context.Context, in *pb.CopyObjectReque
 				err = ErrInvalidCopyDest
 			}
 		}
-	case utils.CopyType_CopyCrossBuckets:
+	case utils.MoveType_MoveCrossBuckets:
 	default:
 		// copy cross buckets as default
 		if in.TargetObject == "" || in.TargetBucket == "" {
@@ -613,7 +660,7 @@ func (s *s3Service) DeleteObject(ctx context.Context, in *pb.DeleteObjectInput, 
 		if in.VersioId != "" && in.VersioId != "null" {
 			err = ErrNoSuchVersion
 		} else {
-			err = s.removeObjectEntryByName(ctx, in.Bucket, in.Key)
+			err = s.removeObject(ctx, bucket, in.Key)
 		}
 	case utils.VersioningEabled:
 		// TODO: versioning
@@ -626,18 +673,7 @@ func (s *s3Service) DeleteObject(ctx context.Context, in *pb.DeleteObjectInput, 
 		err = ErrInternalError
 	}
 
-	if err == nil {
-		// TODO: enable cache
-		/*
-			yig.MetaStorage.Cache.Remove(redis.ObjectTable, obj.OBJECT_CACHE_PREFIX, bucketName+":"+objectName+":")
-			yig.DataCache.Remove(bucketName + ":" + objectName + ":")
-			yig.DataCache.Remove(bucketName + ":" + objectName + ":" + "null")
-			if version != "" {
-				yig.MetaStorage.Cache.Remove(redis.ObjectTable,
-					obj.OBJECT_CACHE_PREFIX, bucketName+":"+objectName+":"+version)
-				yig.DataCache.Remove(bucketName + ":" + objectName + ":" + version)
-			}*/
-	}
+	// TODO: need to refresh cache if it is enabled
 
 	return nil
 }
@@ -649,12 +685,66 @@ func (s *s3Service) removeObjectEntryByName(ctx context.Context, bucketName, obj
 	}
 	if err != nil {
 		log.Errorf("get object failed, err:%v\n", err)
-		return ErrInternalError
+		return err
 	}
 
 	err = s.MetaStorage.DeleteObject(ctx, obj)
 
 	return
+}
+
+func (s *s3Service) removeObject(ctx context.Context, bucket *meta.Bucket, objectKey string) error {
+	log.Debugf("remove object[%s] from bucket[%s]\n", objectKey, bucket.Name)
+	obj, err := s.MetaStorage.GetObject(ctx, bucket.Name, objectKey, true)
+	if err == ErrNoSuchKey {
+		return nil
+	}
+	if err != nil {
+		log.Errorf("get object failed, err:%v\n", err)
+		return ErrInternalError
+	}
+
+	backendName := bucket.DefaultLocation
+	if obj.Location != "" {
+		backendName = obj.Location
+	}
+	backend, err := getBackend(ctx, s.backendClient, backendName)
+	if err != nil {
+		log.Errorln("failed to get backend with err:", err)
+		return err
+	}
+	sd, err := driver.CreateStorageDriver(backend.Type, backend)
+	if err != nil {
+		log.Errorln("failed to create storage, err:", err)
+		return err
+	}
+
+	// mark object as deleted
+	err = s.MetaStorage.MarkObjectAsDeleted(ctx, obj)
+	if err != nil {
+		log.Errorln("failed to mark object as deleted, err:", err)
+		return err
+	}
+
+	// delete object data in backend
+	err = sd.Delete(ctx, &pb.DeleteObjectInput{Bucket: bucket.Name, Key: objectKey, VersioId: obj.VersionId,
+		ETag: obj.Etag, StorageMeta: obj.StorageMeta, ObjectId: obj.ObjectId})
+	if err != nil {
+		log.Errorf("failed to delete obejct[%s] from backend storage, err:", objectKey, err)
+		return err
+	} else {
+		log.Infof("delete obejct[%s] from backend storage successfully.", err)
+	}
+
+	// delete object meta data from database
+	err = s.MetaStorage.DeleteObject(ctx, obj)
+	if err != nil {
+		log.Errorf("failed to delete obejct[%s] metadata, err:", objectKey, err)
+	} else {
+		log.Infof("delete obejct[%s] metadata successfully.", objectKey)
+	}
+
+	return err
 }
 
 func (s *s3Service) ListObjects(ctx context.Context, in *pb.ListObjectsRequest, out *pb.ListObjectsResponse) error {
@@ -698,9 +788,9 @@ func (s *s3Service) ListObjects(ctx context.Context, in *pb.ListObjectsRequest, 
 		// TODO validate user policy and ACL
 	}
 
-	retObjects, prefixes, truncated, nextMarker, _, err := s.ListObjectsInternal(ctx, in)
-	if truncated && len(nextMarker) != 0 {
-		out.NextMarker = nextMarker
+	retObjects, appendInfo, err := s.ListObjectsInternal(ctx, in)
+	if appendInfo.Truncated && len(appendInfo.NextMarker) != 0 {
+		out.NextMarker = appendInfo.NextMarker
 	}
 	if in.Version == constants.ListObjectsType2Int {
 		out.NextMarker = util.Encrypt(out.NextMarker)
@@ -727,8 +817,8 @@ func (s *s3Service) ListObjects(ctx context.Context, in *pb.ListObjectsRequest, 
 		log.Infof("object:%+v\n", object)
 	}
 	out.Objects = objects
-	out.Prefixes = prefixes
-	out.IsTruncated = truncated
+	out.Prefixes = appendInfo.Prefixes
+	out.IsTruncated = appendInfo.Truncated
 
 	if in.EncodingType != "" { // only support "url" encoding for now
 		out.Prefixes = helper.Map(out.Prefixes, func(s string) string {
@@ -742,7 +832,7 @@ func (s *s3Service) ListObjects(ctx context.Context, in *pb.ListObjectsRequest, 
 }
 
 func (s *s3Service) ListObjectsInternal(ctx context.Context, request *pb.ListObjectsRequest) (retObjects []*meta.Object,
-	prefixes []string, truncated bool, nextMarker, nextVerIdMarker string, err error) {
+	appendInfo utils.ListObjsAppendInfo, err error) {
 	log.Infoln("Prefix:", request.Prefix, "Marker:", request.Marker, "MaxKeys:",
 		request.MaxKeys, "Delimiter:", request.Delimiter, "Version:", request.Version,
 		"keyMarker:", request.KeyMarker, "versionIdMarker:", request.VersionIdMarker)
