@@ -313,6 +313,8 @@ func schedSortedActionsRules(inRules *InterRules) {
 						TargetBackend: r.Backend,
 						ObjSize:       obj.Size,
 						VersionId:     obj.VersionId,
+						StorageMeta:   obj.StorageMeta,
+						ObjectId:      obj.ObjectId,
 					}
 
 					// If send failed, then ignore it, because it will be re-sent in the next schedule period.

@@ -460,7 +460,7 @@ func (s *s3Service) MoveObject(ctx context.Context, in *pb.MoveObjectRequest, ou
 			targetObject.Location = in.TargetLocation
 			log.Infof("move %s cross backends, srcBackend=%s, targetBackend=%s, targetTier=%d\n",
 				srcObject.ObjectKey, srcObject.Location, targetObject.Location, targetObject.Tier)
-		} else { // CopyType_CopyCrossBuckets
+		} else { // MoveType_MoveCrossBuckets
 			log.Infof("move %s from bucket[%s] to bucket[%s]\n", targetObject.ObjectKey, srcObject.BucketName,
 				targetObject.BucketName)
 			targetBucket, err = s.MetaStorage.GetBucket(ctx, in.TargetBucket, true)
@@ -513,7 +513,10 @@ func (s *s3Service) MoveObject(ctx context.Context, in *pb.MoveObjectRequest, ou
 		if err != nil {
 			log.Errorln("failed to update meta data after copy, err:", err)
 			// clean target object data from backend, if failed, gc will clean
-			ierr := targetSd.Delete(ctx, &pb.DeleteObjectInput{Bucket: targetObject.BucketName, Key: targetObject.ObjectKey})
+			ierr := targetSd.Delete(ctx, &pb.DeleteObjectInput{
+				Bucket: targetObject.BucketName, Key: targetObject.ObjectKey, ObjectId: targetObject.ObjectId,
+				VersioId: targetObject.VersionId, StorageMeta: targetObject.StorageMeta,
+			})
 			if ierr != nil {
 				// if delete failed, no error return, because gc will clean it
 				ierr = s.MetaStorage.DeleteGcobjRecord(ctx, newObj)
@@ -522,7 +525,10 @@ func (s *s3Service) MoveObject(ctx context.Context, in *pb.MoveObjectRequest, ou
 			return err
 		}
 		// step 4: delete old data from backend storage
-		err = srcSd.Delete(ctx, &pb.DeleteObjectInput{Bucket: srcObject.BucketName, Key: srcObject.ObjectKey})
+		err = srcSd.Delete(ctx, &pb.DeleteObjectInput{
+			Bucket: srcObject.BucketName, Key: srcObject.ObjectKey, ObjectId: srcObject.ObjectId,
+			VersioId: srcObject.VersionId, StorageMeta: srcObject.StorageMeta,
+		})
 		if err != nil {
 			log.Warnln("delete source object failed, err:", err)
 			// if delete failed, no error return, because gc will clean it
@@ -865,19 +871,6 @@ func (s *s3Service) ListObjectsInternal(ctx context.Context, request *pb.ListObj
 	}
 
 	return s.MetaStorage.Db.ListObjects(ctx, request.Bucket, request.Versioned, int(request.MaxKeys), filt)
-}
-
-func (s *s3Service) CountObjects(ctx context.Context, in *pb.ListObjectsRequest, out *pb.CountObjectsResponse) error {
-	log.Info("Count objects is called in s3 service.")
-
-	rsp, err := s.MetaStorage.Db.CountObjects(ctx, in.Bucket, in.Prefix)
-	if err != nil {
-		return err
-	}
-	out.Count = rsp.Count
-	out.Size = rsp.Size
-
-	return nil
 }
 
 func (s *s3Service) checkOldObject(ctx context.Context, bucketName, objectName, versioning string) (version uint64,

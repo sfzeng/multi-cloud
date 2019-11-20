@@ -369,6 +369,12 @@ func (s *s3Service) HeadObject(ctx context.Context, in *pb.BaseObjRequest, out *
 	return nil
 }
 
+func (s *s3Service) CopyObject(ctx context.Context, in *pb.CopyObjectRequest, out *pb.BaseResponse) error {
+	log.Info("UpdateBucket is called in s3 service.")
+
+	return nil
+}
+
 func (s *s3Service) CopyObjPart(ctx context.Context, in *pb.CopyObjPartRequest, out *pb.CopyObjPartResponse) error {
 	log.Info("UpdateBucket is called in s3 service.")
 
@@ -505,6 +511,19 @@ func (s *s3Service) AddUploadRecord(ctx context.Context, record *pb.MultipartUpl
 
 func (s *s3Service) DeleteUploadRecord(ctx context.Context, record *pb.MultipartUploadRecord, out *pb.BaseResponse) error {
 	log.Infof("delete multipart upload record")
+
+	return nil
+}
+
+func (s *s3Service) CountObjects(ctx context.Context, in *pb.ListObjectsRequest, out *pb.CountObjectsResponse) error {
+	log.Info("Count objects is called in s3 service.")
+
+	rsp, err := s.MetaStorage.Db.CountObjects(ctx, in.Bucket, in.Prefix)
+	if err != nil {
+		return err
+	}
+	out.Count = rsp.Count
+	out.Size = rsp.Size
 
 	return nil
 }

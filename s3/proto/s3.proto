@@ -36,6 +36,7 @@ service S3 {
 	rpc DeleteUploadRecord(MultipartUploadRecord) returns (BaseResponse) {}
 
 	rpc HeadObject(BaseObjRequest) returns (Object) {}
+	rpc CopyObject(CopyObjectRequest) returns (BaseResponse) {}
 	rpc MoveObject(MoveObjectRequest) returns (MoveObjectResponse) {}
 	rpc CopyObjPart(CopyObjPartRequest) returns (CopyObjPartResponse) {}
 	rpc PutObjACL(PutObjACLRequest) returns (BaseResponse) {}
@@ -54,6 +55,14 @@ service S3 {
 	rpc HeadBucket(BaseRequest) returns (Bucket) {}
 }
 
+message CopyObjectRequest {
+	string objKey = 1;
+	string srcBucket = 2;
+	string targetBucket = 3;
+	string targetBackend = 4;
+	int32  targetTier = 5;
+}
+
 message MoveObjectRequest {
 	string srcObject = 1;
 	string targetObject = 2;
@@ -63,6 +72,14 @@ message MoveObjectRequest {
 	int32  targetTier = 6;
 	int32  copyType = 7;
 	int32  sourceType = 8; // lifecyce service, migration service, end user, etc.
+}
+
+message MoveObjectResponse {
+    Object objMeta = 1;
+    string status = 2;
+    string md5 = 3;
+    string versionId = 4;
+    int64 lastModified = 5;
 }
 
 message PutObjectRequest {
@@ -85,14 +102,6 @@ message PutObjectResponse {
 	string md5 = 3;
 	string versionId = 4;
 	int64 lastModified = 5;
-}
-
-message MoveObjectResponse {
-    Object objMeta = 1;
-    string status = 2;
-    string md5 = 3;
-    string versionId = 4;
-    int64 lastModified = 5;
 }
 
 message PutBucketVersioningRequest {

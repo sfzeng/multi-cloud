@@ -21,21 +21,29 @@ import (
 
 	"github.com/micro/go-micro/metadata"
 	"github.com/opensds/multi-cloud/api/pkg/common"
-	. "github.com/opensds/multi-cloud/datamover/pkg/utils"
-	datamover "github.com/opensds/multi-cloud/datamover/proto"
+	"github.com/opensds/multi-cloud/datamover/pkg/utils"
+	"github.com/opensds/multi-cloud/datamover/proto"
 	osdss3 "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
 )
 
-func deleteObj(objKey, virtBucket, versionId string) error {
-	log.Infof("object expiration: objKey=%s, virtBucket=%s, versionId=%s\n", objKey, virtBucket, versionId)
-	if virtBucket == "" {
+func doExpirationAction(acReq *datamover.LifecycleActionRequest) error {
+	log.Debugf("expiration action: delete %s.\n", acReq.ObjKey)
+
+	objKey := acReq.ObjKey
+	bucketName := acReq.BucketName
+	versionId := acReq.VersionId
+	objectId := acReq.ObjectId
+	storageMeta := acReq.StorageMeta
+
+	if bucketName == "" {
 		log.Infof("expiration of object[%s] is failed: virtual bucket is null.\n", objKey)
-		return errors.New(DMERR_InternalError)
+		return errors.New(utils.DMERR_InternalError)
 	}
 
 	// call API of s3 service to delete object
-	delMetaReq := osdss3.DeleteObjectInput{Bucket: virtBucket, Key: objKey, VersioId: versionId}
+	delMetaReq := osdss3.DeleteObjectInput{Bucket: bucketName, Key: objKey, VersioId: versionId, ObjectId: objectId,
+		StorageMeta: storageMeta}
 	ctx := metadata.NewContext(context.Background(), map[string]string{
 		common.CTX_KEY_IS_ADMIN:  strconv.FormatBool(true),
 		common.CTX_KEY_TENANT_ID: INTERNAL_TENANT,
@@ -44,24 +52,10 @@ func deleteObj(objKey, virtBucket, versionId string) error {
 	if err != nil {
 		// if it is deleted failed this time, it will be delete again in the next schedule round
 		log.Errorf("delete object metadata of obj[bucket:%s,objKey:%s] failed, err:%v\n",
-			virtBucket, objKey, err)
-		return err
+			bucketName, objKey, err)
 	} else {
 		log.Infof("delete object metadata of obj[bucket:%s,objKey:%s] successfully.\n",
-			virtBucket, objKey)
-	}
-
-	return err
-}
-
-func doExpirationAction(acReq *datamover.LifecycleActionRequest) error {
-	log.Infof("expiration action: delete %s.\n", acReq.ObjKey)
-
-	err := deleteObj(acReq.ObjKey, acReq.BucketName, acReq.VersionId)
-	if err != nil {
-		log.Errorf("expiration execute failed, err:%v\n", err)
-	} else {
-		log.Infof("expiration execute suceed, obj:%s\n", acReq.ObjKey)
+			bucketName, objKey)
 	}
 
 	return err

@@ -34,8 +34,6 @@ func GetCredentialFromCtx(ctx context.Context) (isAdmin bool, tenantId string, e
 		return
 	}
 
-	log.Infof("777777777777777ctx:%+v\n", ctx)
-	log.Infof("md:%+v\n", md)
 	isAdmin = false
 	isAdminStr, _ := md[common.CTX_KEY_IS_ADMIN]
 	if isAdminStr == common.CTX_VAL_TRUE {
