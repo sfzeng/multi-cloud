@@ -20,9 +20,8 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful"
-	"github.com/journeymidnight/yig/helper"
-	"github.com/opensds/multi-cloud/api/pkg/common"
-	"github.com/opensds/multi-cloud/api/pkg/s3/datatype"
+	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/s3api/pkg/s3/datatype"
 	. "github.com/opensds/multi-cloud/s3/error"
 
 	pb "github.com/opensds/multi-cloud/s3/proto"
@@ -130,7 +129,7 @@ func (s *APIService) ObjectPartCopy(request *restful.Request, response *restful.
 	} else {
 		copySourceRange, err := datatype.ParseRequestRange(copySourceRangeString, getObjMetaRes.Object.Size)
 		if err != nil {
-			helper.ErrorIf(err, "Invalid request range, err:", err)
+			log.Errorln("Invalid request range, err:", err)
 			WriteErrorResponse(response, request, ErrInvalidRange)
 			return
 		}

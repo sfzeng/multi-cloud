@@ -24,9 +24,8 @@ import (
 	"net/http"
 	"sort"
 
-	. "github.com/journeymidnight/yig/api/datatype"
-	. "github.com/journeymidnight/yig/error"
-	"github.com/journeymidnight/yig/iam"
+	. "github.com/opensds/multi-cloud/s3api/pkg/datatype"
+	. "github.com/opensds/multi-cloud/s3api/pkg/error"
 )
 
 // credentialHeader data type represents structured form of Credential
@@ -46,7 +45,7 @@ func parseCredential(credentialValue string) (credentialHeader, error) {
 	if len(credElements) != 5 {
 		return credentialHeader{}, ErrCredMalformed
 	}
-	if !iam.IsValidAccessKey.MatchString(credElements[0]) {
+	if !IsValidAccessKey.MatchString(credElements[0]) {
 		return credentialHeader{}, ErrInvalidAccessKeyID
 	}
 	// Save access key id.

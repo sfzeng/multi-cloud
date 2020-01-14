@@ -27,7 +27,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	. "github.com/journeymidnight/yig/error"
+	. "github.com/opensds/multi-cloud/s3api/pkg/error"
 )
 
 // http Header "x-amz-content-sha256" == "UNSIGNED-PAYLOAD" indicates that the
@@ -50,6 +50,12 @@ func sumHMAC(key []byte, data []byte) []byte {
 
 // Reserved string regexp.
 var reservedNames = regexp.MustCompile("^[a-zA-Z0-9-_.~/]+$")
+
+// IsValidSecretKey - validate secret key.
+var IsValidSecretKey = regexp.MustCompile(`^.{8,40}$`)
+
+// IsValidAccessKey - validate access key.
+var IsValidAccessKey = regexp.MustCompile(`^[a-zA-Z0-9\\-\\.\\_\\~]{5,20}$`)
 
 // getURLEncodedName encode the strings from UTF-8 byte representations to HTML hex escape sequences
 //

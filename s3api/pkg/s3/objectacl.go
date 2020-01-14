@@ -21,10 +21,9 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful"
-	"github.com/journeymidnight/yig/helper"
-	"github.com/opensds/multi-cloud/api/pkg/common"
-	"github.com/opensds/multi-cloud/api/pkg/s3/datatype"
-	s3error "github.com/opensds/multi-cloud/s3/error"
+	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/s3api/pkg/s3/datatype"
+	"github.com/opensds/multi-cloud/s3/error"
 	pb "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
 )
@@ -105,7 +104,7 @@ func (s *APIService) ObjectAclGet(request *restful.Request, response *restful.Re
 
 	aclBuffer, err := xmlFormat(policy)
 	if err != nil {
-		helper.ErrorIf(err, "failed to marshal acl XML for bucket", bucketName)
+		log.Errorf("failed to marshal acl XML for bucket, err:%v\n", bucketName, err)
 		WriteErrorResponse(response, request, s3error.ErrInternalError)
 		return
 	}

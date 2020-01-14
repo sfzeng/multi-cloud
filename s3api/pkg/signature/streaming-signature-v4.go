@@ -31,10 +31,14 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
-	"github.com/journeymidnight/yig/api/datatype"
-	. "github.com/journeymidnight/yig/error"
-	"github.com/journeymidnight/yig/iam"
-	"github.com/journeymidnight/yig/iam/common"
+	"github.com/opensds/multi-cloud/s3api/pkg/datatype"
+	. "github.com/opensds/multi-cloud/s3api/pkg/error"
+	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/credentials"
+	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/credentials/keystonecredentials"
+	//. "github.com/journeymidnight/yig/error"
+	//"github.com/journeymidnight/yig/iam"
+	//"github.com/journeymidnight/yig/iam/common"
+	//"github.com/journeymidnight/yig/iam"
 )
 
 // Streaming AWS Signature Version '4' constants.
@@ -46,7 +50,7 @@ const (
 )
 
 // getChunkSignature - get chunk signature.
-func getChunkSignature(cred common.Credential, seedSignature string, region string, date time.Time, hashedChunk string) string {
+func getChunkSignature(cred credentials.Value, seedSignature string, region string, date time.Time, hashedChunk string) string {
 	// Calculate string to sign.
 	stringToSign := signV4ChunkedAlgorithm + "\n" +
 		date.Format(datatype.Iso8601Format) + "\n" +
@@ -68,7 +72,7 @@ func getChunkSignature(cred common.Credential, seedSignature string, region stri
 //     - http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-streaming.html
 // returns signature, error otherwise if the signature mismatches or any other
 // error while parsing and validating.
-func CalculateSeedSignature(r *http.Request) (credential common.Credential, signature string, region string, date time.Time, err error) {
+func CalculateSeedSignature(r *http.Request) (credential credentials.Value, signature string, region string, date time.Time, err error) {
 	// Copy request.
 	req := *r
 
@@ -95,7 +99,7 @@ func CalculateSeedSignature(r *http.Request) (credential common.Credential, sign
 		return
 	}
 
-	credential, e := iam.GetCredential(signV4Values.Credential.accessKey)
+	credential, e := keystonecredentials.NewCredentialsClient(signV4Values.Credential.accessKey).Get()
 	if e != nil {
 		return credential, "", "", time.Time{}, ErrInvalidAccessKeyID
 	}
@@ -175,7 +179,7 @@ func newSignV4ChunkedReader(req *http.Request) (io.Reader, error) {
 // AWS Signature V4 chunked reader.
 type s3ChunkedReader struct {
 	reader            *bufio.Reader
-	cred              common.Credential
+	cred              credentials.Value
 	seedSignature     string
 	seedDate          time.Time
 	region            string

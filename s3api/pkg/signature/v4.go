@@ -33,10 +33,13 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/journeymidnight/yig/api/datatype"
-	. "github.com/journeymidnight/yig/error"
-	"github.com/journeymidnight/yig/iam"
-	"github.com/journeymidnight/yig/iam/common"
+	. "github.com/opensds/multi-cloud/s3api/pkg/datatype"
+	//. "github.com/journeymidnight/yig/error"
+	. "github.com/opensds/multi-cloud/s3api/pkg/error"
+	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/credentials"
+	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/credentials/keystonecredentials"
+
+
 )
 
 // AWS Signature Version '4' constants.
@@ -142,7 +145,7 @@ func getSignature(signingKey []byte, stringToSign string) string {
 // doesPolicySignatureMatch - Verify query headers with post policy
 //     - http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-HTTPPOSTConstructPolicy.html
 // returns true if matches, false otherwise. if error is not nil then it is always false
-func DoesPolicySignatureMatchV4(formValues map[string]string) (credential common.Credential, err error) {
+func DoesPolicySignatureMatchV4(formValues map[string]string) (credential credentials.Value, err error) {
 	// Parse credential tag.
 	credHeader, err := parseCredential(formValues["X-Amz-Credential"])
 	if err != nil {
@@ -161,10 +164,11 @@ func DoesPolicySignatureMatchV4(formValues map[string]string) (credential common
 		return credential, ErrMalformedDate
 	}
 
-	credential, e = iam.GetCredential(credHeader.accessKey)
+	credential, e = keystonecredentials.NewCredentialsClient(credHeader.accessKey).Get()
 	if e != nil {
 		return credential, ErrInvalidAccessKeyID
 	}
+
 	// Get signing key.
 	signingKey := getSigningKey(credential.SecretAccessKey, t, region)
 
@@ -182,14 +186,14 @@ func DoesPolicySignatureMatchV4(formValues map[string]string) (credential common
 //     - http://docs.aws.amazon.com/AmazonS3/latest/API/sigv4-query-string-auth.html
 // returns true if matches, false otherwise. if error is not nil then it is always false
 func DoesPresignedSignatureMatchV4(r *http.Request,
-	validateRegion bool) (credential common.Credential, err error) {
+	validateRegion bool) (credential credentials.Value, err error) {
 	// Parse request query string.
 	preSignValues, err := parsePreSignV4(r.URL.Query(), r.Header)
 	if err != nil {
 		return credential, err
 	}
 
-	credential, e := iam.GetCredential(preSignValues.Credential.accessKey)
+	credential, e := keystonecredentials.NewCredentialsClient(preSignValues.Credential.accessKey).Get()
 	if e != nil {
 		return credential, ErrInvalidAccessKeyID
 	}
@@ -240,7 +244,7 @@ func DoesPresignedSignatureMatchV4(r *http.Request,
 }
 
 // get credential but not verify it, used only for signed v4 auth
-func getCredentialUnverified(r *http.Request) (credential common.Credential, err error) {
+func getCredentialUnverified(r *http.Request) (credential credentials.Value, err error) {
 	v4Auth := r.Header.Get("Authorization")
 
 	signV4Values, err := parseSignV4(v4Auth, r.Header)
@@ -248,7 +252,7 @@ func getCredentialUnverified(r *http.Request) (credential common.Credential, err
 		return credential, err
 	}
 
-	credential, e := iam.GetCredential(signV4Values.Credential.accessKey)
+	credential, e := keystonecredentials.NewCredentialsClient(signV4Values.Credential.accessKey).Get()
 	if e != nil {
 		return credential, ErrInvalidAccessKeyID
 	}
@@ -260,7 +264,7 @@ func getCredentialUnverified(r *http.Request) (credential common.Credential, err
 //     - http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-authenticating-requests.html
 // returns true if matches, false otherwise. if error is not nil then it is always false
 func DoesSignatureMatchV4(hashedPayload string, r *http.Request,
-	validateRegion bool) (credential common.Credential, err error) {
+	validateRegion bool) (credential credentials.Value, err error) {
 	// Save authorization header.
 	v4Auth := r.Header.Get("Authorization")
 
@@ -320,7 +324,7 @@ func DoesSignatureMatchV4(hashedPayload string, r *http.Request,
 	// Get string to sign from canonical request.
 	stringToSign := getStringToSign(canonicalRequest, t, region)
 
-	credential, e := iam.GetCredential(signV4Values.Credential.accessKey)
+	credential, e := keystonecredentials.NewCredentialsClient(signV4Values.Credential.accessKey).Get()
 	if e != nil {
 		return credential, ErrInvalidAccessKeyID
 	}

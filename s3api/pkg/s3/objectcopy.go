@@ -21,7 +21,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/micro/go-micro/client"
-	"github.com/opensds/multi-cloud/api/pkg/common"
+	"github.com/opensds/multi-cloud/s3api/pkg/common"
 	. "github.com/opensds/multi-cloud/s3/error"
 	"github.com/opensds/multi-cloud/s3/pkg/meta/types"
 	"github.com/opensds/multi-cloud/s3/pkg/utils"

@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * Modifications copyright (C) 2020 The OpenSDS Authors.
+*/
 
 package signature
 
@@ -26,8 +29,10 @@ import (
 	"net/http"
 	"strings"
 
-	. "github.com/journeymidnight/yig/error"
-	"github.com/journeymidnight/yig/iam/common"
+	. "github.com/opensds/multi-cloud/s3/error"
+	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/credentials"
+	//. "github.com/journeymidnight/yig/error"
+	//"github.com/journeymidnight/yig/iam/common"
 )
 
 // Verify if request has AWS Signature
@@ -123,15 +128,15 @@ func sumMD5(data []byte) []byte {
 }
 
 // A helper function to verify if request has valid AWS Signature
-func IsReqAuthenticated(r *http.Request) (c common.Credential, e error) {
+func IsReqAuthenticated(r *http.Request) (credential credentials.Value, e error) {
 	payload, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return c, ErrInternalError
+		return  credential, ErrInternalError
 	}
 	// Verify Content-Md5, if payload is set.
 	if r.Header.Get("Content-Md5") != "" {
 		if r.Header.Get("Content-Md5") != base64.StdEncoding.EncodeToString(sumMD5(payload)) {
-			return c, ErrBadDigest
+			return credential, ErrBadDigest
 		}
 	}
 	// Populate back the payload.
@@ -150,5 +155,5 @@ func IsReqAuthenticated(r *http.Request) (c common.Credential, e error) {
 		credential, _, _, _, err := CalculateSeedSignature(r)
 		return credential, err
 	}
-	return c, ErrAccessDenied
+	return credential, ErrAccessDenied
 }

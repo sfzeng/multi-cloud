@@ -28,8 +28,10 @@ import (
 	"net/http"
 	"regexp"
 
-	. "github.com/journeymidnight/yig/error"
-	"github.com/journeymidnight/yig/helper"
+	. "github.com/opensds/multi-cloud/s3api/pkg/error"
+
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -222,7 +224,7 @@ func CheckPostPolicy(ctx context.Context, formValues map[string]string,
 	postPolicyForm, err := parsePostPolicyForm(string(policyBytes),
 		eqPolicyRegExp, startswithPolicyRegExp)
 	if err != nil {
-		helper.Logger.Println(5, "[", helper.RequestIdFromContext(ctx), "]", "Parse post-policy form error:", err)
+		log.Errorf("Parse post-policy form error:%v\n", err)
 		return ErrMalformedPOSTRequest
 	}
 	if !postPolicyForm.Expiration.After(time.Now()) {

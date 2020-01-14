@@ -16,7 +16,7 @@
 //
 // Provides request signing for request that need to be signed with the Signature.
 // Provides signature validation for request.
-//
+
 package signer
 
 import (
@@ -72,7 +72,7 @@ func FilterFactory() restful.FilterFunction {
 // Authorization: algorithm Credential=accesskeyID/credential scope, SignedHeaders=SignedHeaders, Signature=signature
 // credential scope <requestDate>/<region>/<service>/sign_request
 func (sign *Signature) Filter(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
-	// TODO:Location constraint
+    // TODO:Location constraint
 	authType := signature.GetRequestAuthType(req.Request)
 	switch authType {
 	case signature.AuthTypeSignedV4, signature.AuthTypePresignedV4,

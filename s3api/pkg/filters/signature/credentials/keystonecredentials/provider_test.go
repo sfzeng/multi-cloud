@@ -19,7 +19,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/opensds/multi-cloud/api/pkg/filters/signature/credentials/keystonecredentials"
+	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/credentials/keystonecredentials"
 	th "github.com/opensds/multi-cloud/testhelper"
 	"github.com/opensds/multi-cloud/testhelper/gophercloudclient"
 )

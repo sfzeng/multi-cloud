@@ -12,14 +12,19 @@ import (
 
 	"errors"
 
-	"github.com/journeymidnight/yig/api/datatype"
-	. "github.com/journeymidnight/yig/error"
-	"github.com/journeymidnight/yig/helper"
-	"github.com/journeymidnight/yig/iam"
-	"github.com/journeymidnight/yig/iam/common"
+	"github.com/opensds/multi-cloud/s3api/pkg/datatype"
+	. "github.com/opensds/multi-cloud/s3api/pkg/error"
+	log "github.com/sirupsen/logrus"
+	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/credentials"
+	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/credentials/keystonecredentials"
+	//. "github.com/journeymidnight/yig/error"
+	//"github.com/journeymidnight/yig/helper"
+	//"github.com/journeymidnight/yig/iam"
+	//"github.com/journeymidnight/yig/iam/common"
 
 	//	"net"
 	"strconv"
+	"github.com/opensds/multi-cloud/s3/pkg/helper"
 )
 
 const (
@@ -71,7 +76,7 @@ func buildCanonicalizedAmzHeaders(ctx context.Context, headers *http.Header) str
 		values := (*headers)[h] // Don't use Header.Get() here because we need ALL values
 		ans += strings.ToLower(h) + ":" + strings.Join(values, ",") + "\n"
 	}
-	helper.Debugln("[", helper.RequestIdFromContext(ctx), "]", "V2 canonical amazon headers:", ans)
+	log.Debugln("V2 canonical amazon headers:", ans)
 	return ans
 }
 
@@ -84,7 +89,7 @@ func buildCanonicalizedResource(req *http.Request) string {
 		ans += "/" + bucketName
 	}
 	ans += req.URL.EscapedPath()
-	helper.Debugln("[", helper.RequestIdFromContext(req.Context()), "]", "HOST:", req.Host, hostWithOutPort, ans)
+	log.Debugln("HOST:", req.Host, hostWithOutPort, ans)
 	requiredQuery := []string{
 		// NOTE: this array is sorted alphabetically
 		"acl", "cors", "delete", "lifecycle", "location",
@@ -118,7 +123,7 @@ func buildCanonicalizedResource(req *http.Request) string {
 	if encodedQuery != "" {
 		ans += "?" + encodedQuery
 	}
-	helper.Debugln("[", helper.RequestIdFromContext(req.Context()), "]", "V2 canonical resource:", ans)
+	log.Debugln("V2 canonical resource:", ans)
 	return ans
 }
 
@@ -127,14 +132,14 @@ func dictate(secretKey string, stringToSign string, signature []byte, requestId 
 	mac := hmac.New(sha1.New, []byte(secretKey))
 	mac.Write([]byte(stringToSign))
 	expectedMac := mac.Sum(nil)
-	helper.Debugln("[", requestId, "]", "key，mac", secretKey, string(expectedMac), string(signature))
+	log.Debugln("key，mac", secretKey, string(expectedMac), string(signature))
 	if !hmac.Equal(expectedMac, signature) {
 		return ErrSignatureDoesNotMatch
 	}
 	return nil
 }
 
-func DoesSignatureMatchV2(r *http.Request) (credential common.Credential, err error) {
+func DoesSignatureMatchV2(r *http.Request) (credential credentials.Value, err error) {
 	authorizationHeader := r.Header.Get("Authorization")
 	splitHeader := strings.Split(authorizationHeader, " ")
 	// Authorization = "AWS" + " " + AWSAccessKeyId + ":" + Signature;
@@ -143,9 +148,8 @@ func DoesSignatureMatchV2(r *http.Request) (credential common.Credential, err er
 		return credential, ErrMissingSignTag
 	}
 	accessKey := splitSignature[0]
-	credential, e := iam.GetCredential(accessKey)
-	requestId := helper.RequestIdFromContext(r.Context())
-	helper.Debug("[ %s ] cre1:%s,%s,%s,%s", requestId, credential.UserId, credential.DisplayName, credential.AccessKeyID, credential.SecretAccessKey)
+	credential, e := keystonecredentials.NewCredentialsClient(accessKey).Get()
+	log.Debugln("[ %s ] cre1:%s,%s,%s", credential.TenantID, credential.DisplayName, credential.AccessKeyID, credential.SecretAccessKey)
 	if e != nil {
 		return credential, ErrInvalidAccessKeyID
 	}
@@ -190,18 +194,19 @@ func DoesSignatureMatchV2(r *http.Request) (credential common.Credential, err er
 	stringToSign += buildCanonicalizedAmzHeaders(r.Context(), &r.Header)
 	stringToSign += buildCanonicalizedResource(r)
 
-	helper.Debugln("[", requestId, "]", "stringtosign", stringToSign, credential.SecretAccessKey)
-	helper.Debugln("[", requestId, "]", "credential", credential.UserId, credential.AccessKeyID, credential.SecretAccessKey)
-	return credential, dictate(credential.SecretAccessKey, stringToSign, signature, requestId)
+
+	log.Debugln("stringtosign", stringToSign, credential.SecretAccessKey)
+	log.Debugln("credential", credential.TenantID, credential.AccessKeyID, credential.SecretAccessKey)
+	return credential, dictate(credential.SecretAccessKey, stringToSign, signature, "")
 }
 
-func DoesPresignedSignatureMatchV2(r *http.Request) (credential common.Credential, err error) {
+func DoesPresignedSignatureMatchV2(r *http.Request) (credential credentials.Value, err error) {
 	query := r.URL.Query()
 	accessKey := query.Get("AWSAccessKeyId")
 	expires := query.Get("Expires")
 	signatureString := query.Get("Signature")
 
-	credential, e := iam.GetCredential(accessKey)
+	credential, e := keystonecredentials.NewCredentialsClient(accessKey).Get()
 	if e != nil {
 		return credential, ErrInvalidAccessKeyID
 	}
@@ -228,14 +233,14 @@ func DoesPresignedSignatureMatchV2(r *http.Request) (credential common.Credentia
 	stringToSign += buildCanonicalizedAmzHeaders(r.Context(), &r.Header)
 	stringToSign += buildCanonicalizedResource(r)
 
-	return credential, dictate(credential.SecretAccessKey, stringToSign, signature, helper.RequestIdFromContext((r.Context())))
+	return credential, dictate(credential.SecretAccessKey, stringToSign, signature, "")
 }
 
-func DoesPolicySignatureMatchV2(formValues map[string]string) (credential common.Credential,
+func DoesPolicySignatureMatchV2(formValues map[string]string) (credential credentials.Value,
 	err error) {
 
 	if accessKey, ok := formValues["Awsaccesskeyid"]; ok {
-		credential, err = iam.GetCredential(accessKey)
+		credential, err = keystonecredentials.NewCredentialsClient(accessKey).Get()
 		if err != nil {
 			return credential, ErrInvalidAccessKeyID
 		}

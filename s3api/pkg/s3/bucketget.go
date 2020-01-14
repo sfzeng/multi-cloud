@@ -21,9 +21,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/api/pkg/common"
-	"github.com/opensds/multi-cloud/api/pkg/s3/datatype"
-	"github.com/opensds/multi-cloud/api/pkg/utils/constants"
+	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/s3api/pkg/s3/datatype"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	. "github.com/opensds/multi-cloud/s3/error"
 	"github.com/opensds/multi-cloud/s3/pkg/helper"
 	"github.com/opensds/multi-cloud/s3/pkg/utils"

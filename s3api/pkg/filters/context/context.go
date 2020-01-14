@@ -16,7 +16,7 @@ package context
 
 import (
 	"github.com/emicklei/go-restful"
-	c "github.com/opensds/multi-cloud/api/pkg/context"
+	c "github.com/opensds/multi-cloud/s3api/pkg/context"
 )
 
 func FilterFactory() restful.FilterFunction {
