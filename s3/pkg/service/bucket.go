@@ -18,7 +18,7 @@ import (
 	"context"
 	"github.com/opensds/multi-cloud/s3/pkg/utils"
 
-	"github.com/opensds/multi-cloud/api/pkg/s3"
+	"github.com/opensds/multi-cloud/s3api/pkg/s3"
 	. "github.com/opensds/multi-cloud/s3/error"
 	. "github.com/opensds/multi-cloud/s3/pkg/meta/types"
 	"github.com/opensds/multi-cloud/s3/pkg/meta/util"
