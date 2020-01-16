@@ -192,6 +192,7 @@ type CommonPrefix struct {
 type Bucket struct {
 	Name         string
 	CreationDate string // time string of format "2006-01-02T15:04:05.000Z"
+	LocationConstraint string
 }
 
 // Object container for object metadata

@@ -37,11 +37,11 @@ type Bucket struct {
 	SSEOpts            SSEConfiguration
 }
 
-type ListAllMyBucketsResult struct {
+/*type ListAllMyBucketsResult struct {
 	Xmlns   string   `xml:"xmlns,attr"`
 	Owner   Owner    `xml:"Owner"`
 	Buckets []Bucket `xml:"Buckets"`
-}
+}*/
 
 type InitiateMultipartUploadResult struct {
 	Xmlns    string `xml:"xmlns,attr"`

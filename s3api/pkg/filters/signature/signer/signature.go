@@ -26,6 +26,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/credentials"
 	"github.com/opensds/multi-cloud/s3api/pkg/signature"
+	c "github.com/opensds/multi-cloud/api/pkg/context"
+	"github.com/opensds/multi-cloud/s3api/pkg/s3"
+	"github.com/opensds/multi-cloud/s3/error"
 )
 
 const (
@@ -80,17 +83,24 @@ func (sign *Signature) Filter(req *restful.Request, resp *restful.Response, chai
 		log.Infof("[%s], AuthTypeSigned:%v", req.Request.URL, authType)
 		if _, err := signature.IsReqAuthenticated(req.Request); err != nil {
 			log.Errorf("[%s] reject: IsReqAuthenticated return false, err:%v\n", req.Request.URL, err)
+			s3.WriteErrorResponse(resp, req, s3error.ErrAccessDenied)
 			return
 		}
 		// TODO: check bucket policy
 	case signature.AuthTypeAnonymous:
 		log.Errorf("[%s] reject: Anonymous not supported.\n", req.Request.URL)
+		s3.WriteErrorResponse(resp, req, s3error.ErrSignatureVersionNotSupported)
 		// TODO: check bucket policy
 		return
 	default:
 		log.Errorf("[%s] reject: AuthTypeUnknown\n", req.Request.URL)
+		s3.WriteErrorResponse(resp, req, s3error.ErrSignatureVersionNotSupported)
 		return
 	}
+
+	ctx := req.Attribute(c.KContext).(*c.Context)
+	ctx.TenantId = sign.credValues.TenantID
+	ctx.UserId = sign.credValues.UserID
 
 	chain.ProcessFilter(req, resp)
 }
