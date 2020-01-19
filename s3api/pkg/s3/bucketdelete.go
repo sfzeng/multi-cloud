@@ -32,5 +32,6 @@ func (s *APIService) BucketDelete(request *restful.Request, response *restful.Re
 		return
 	}
 
+	WriteSuccessNoContent(response)
 	log.Infof("delete bucket[%s] successfully\n", bucketName)
 }

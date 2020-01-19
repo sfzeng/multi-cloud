@@ -23,7 +23,7 @@ import (
 	"github.com/opensds/multi-cloud/s3api/pkg/common"
 	c "github.com/opensds/multi-cloud/s3api/pkg/context"
 	"github.com/opensds/multi-cloud/s3/error"
-	"github.com/opensds/multi-cloud/s3/pkg/model"
+	. "github.com/opensds/multi-cloud/s3api/pkg/s3/datatype"
 	"github.com/opensds/multi-cloud/s3/pkg/utils"
 	"github.com/opensds/multi-cloud/s3/proto"
 	pb "github.com/opensds/multi-cloud/s3/proto"
@@ -33,6 +33,7 @@ import (
 func (s *APIService) BucketPut(request *restful.Request, response *restful.Response) {
 	bucketName := strings.ToLower(request.PathParameter(common.REQUEST_PATH_BUCKET_NAME))
 	if !isValidBucketName(bucketName) {
+		log.Errorln("invalid bucket name: ", bucketName)
 		WriteErrorResponse(response, request, s3error.ErrInvalidBucketName)
 		return
 	}
@@ -65,22 +66,23 @@ func (s *APIService) BucketPut(request *restful.Request, response *restful.Respo
 
 	body := ReadBody(request)
 	flag := false
+	backendName := "xxxx"
 	if body != nil && len(body) != 0 {
 		log.Infof("request body is not empty")
-		createBucketConf := model.CreateBucketConfiguration{}
-		err := xml.Unmarshal(body, &createBucketConf)
+		locationConf := CreateBucketLocationConfiguration{}
+		err := xml.Unmarshal(body, &locationConf)
 		if err != nil {
 			log.Infof("unmarshal failed, body:%v, err:%v\n", body, err)
 			WriteErrorResponse(response, request, s3error.ErrUnmarshalFailed)
 			return
 		}
+		backendName = locationConf.Location
+	}
 
-		backendName := createBucketConf.LocationConstraint
-		if backendName != "" {
-			log.Infof("backendName is %v\n", backendName)
-			bucket.DefaultLocation = backendName
-			flag = s.isBackendExist(ctx, backendName)
-		}
+	if backendName != "" {
+		log.Infof("backendName is %v\n", backendName)
+		bucket.DefaultLocation = backendName
+		flag = s.isBackendExist(ctx, backendName)
 	}
 	if flag == false {
 		log.Errorf("default backend is not provided or it is not exist.")
