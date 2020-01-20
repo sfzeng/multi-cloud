@@ -137,7 +137,9 @@ func HandleS3Error(response *restful.Response, request *restful.Request, err err
 	}
 	if errCode != int32(ErrNoErr) {
 		err := S3ErrorCode(errCode)
+		log.Debugf("**************err:%v\n", err)
 		WriteErrorResponse(response, request, err)
+		log.Debugf("************response.Error:%+v\n", response.Error())
 		return err
 	}
 

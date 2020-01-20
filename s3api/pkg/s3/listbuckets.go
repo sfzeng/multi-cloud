@@ -19,7 +19,6 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/opensds/multi-cloud/s3api/pkg/common"
-	"github.com/opensds/multi-cloud/s3api/pkg/policy"
 	"github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
 	. "github.com/opensds/multi-cloud/s3api/pkg/s3/datatype"
@@ -31,7 +30,7 @@ func parseListBuckets(list *s3.ListBucketsResponse) ListBucketsResponse {
 	log.Infof("Parse ListBuckets: %v", list.Buckets)
 	buckets := []Bucket{}
 	for _, value := range list.Buckets {
-		ctime := time.Unix(value.CreateTime, 0).Format(time.RFC3339)
+		ctime := time.Unix(value.CreateTime, 0).Format(timeFormatAMZ)
 		bucket := Bucket{Name: value.Name, CreationDate: ctime, LocationConstraint: value.DefaultLocation}
 		buckets = append(buckets, bucket)
 	}
@@ -41,9 +40,9 @@ func parseListBuckets(list *s3.ListBucketsResponse) ListBucketsResponse {
 }
 
 func (s *APIService) ListBuckets(request *restful.Request, response *restful.Response) {
-	if !policy.Authorize(request, response, "bucket:list") {
+	/*if !policy.Authorize(request, response, "bucket:list") {
 		return
-	}
+	}*/
 	log.Infof("Received request for all buckets")
 
 	ctx := common.InitCtxWithAuthInfo(request)

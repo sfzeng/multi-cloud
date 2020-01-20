@@ -16,13 +16,12 @@ package s3
 
 import (
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/policy"
 )
 
 func (s *APIService) RouteBucketGet(request *restful.Request, response *restful.Response) {
-	if !policy.Authorize(request, response, "bucket:get") {
+	/*if !policy.Authorize(request, response, "bucket:get") {
 		return
-	}
+	}*/
 	if IsQuery(request, "acl") {
 		s.BucketAclGet(request, response)
 	} else if IsQuery(request, "uploads") {

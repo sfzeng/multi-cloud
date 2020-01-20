@@ -51,7 +51,7 @@ func (gm *GcMgr) Start() {
 		// loopCount is the number of loops for performing gc.
 		loopCount := int(1)
 		// default interval time of performing gc, which is equal to the loopTime set from configuration file.
-		defaultIntervalTime := (time.Duration(gm.loopTime) * time.Second).Nanoseconds()
+		defaultIntervalTime := (time.Duration(3000) * time.Second).Nanoseconds()
 		// the maximum interval time of performing gc.
 		maxIntervalTime := (time.Duration(GC_MAX_INTERVAL_TIME) * time.Second).Nanoseconds()
 		// the current in-used interval time of performing gc. intervalTime is roughly equal or more than the time for performing a gc.

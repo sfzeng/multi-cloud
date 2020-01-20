@@ -26,7 +26,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/credentials"
 	"github.com/opensds/multi-cloud/s3api/pkg/signature"
-	c "github.com/opensds/multi-cloud/api/pkg/context"
+	c "github.com/opensds/multi-cloud/s3api/pkg/context"
 	"github.com/opensds/multi-cloud/s3api/pkg/s3"
 	"github.com/opensds/multi-cloud/s3/error"
 )
@@ -76,12 +76,14 @@ func FilterFactory() restful.FilterFunction {
 // credential scope <requestDate>/<region>/<service>/sign_request
 func (sign *Signature) Filter(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
     // TODO:Location constraint
+    var cred credentials.Value
+    var err error
 	authType := signature.GetRequestAuthType(req.Request)
 	switch authType {
 	case signature.AuthTypeSignedV4, signature.AuthTypePresignedV4,
 		signature.AuthTypePresignedV2, signature.AuthTypeSignedV2:
 		log.Infof("[%s], AuthTypeSigned:%v", req.Request.URL, authType)
-		if _, err := signature.IsReqAuthenticated(req.Request); err != nil {
+		if cred, err = signature.IsReqAuthenticated(req.Request); err != nil {
 			log.Errorf("[%s] reject: IsReqAuthenticated return false, err:%v\n", req.Request.URL, err)
 			s3.WriteErrorResponse(resp, req, s3error.ErrAccessDenied)
 			return
@@ -99,8 +101,9 @@ func (sign *Signature) Filter(req *restful.Request, resp *restful.Response, chai
 	}
 
 	ctx := req.Attribute(c.KContext).(*c.Context)
-	ctx.TenantId = sign.credValues.TenantID
-	ctx.UserId = sign.credValues.UserID
+	ctx.TenantId = cred.TenantID
+	ctx.UserId = cred.UserID
+	log.Debugf("****************ctx:%+v\n", *ctx)
 
 	chain.ProcessFilter(req, resp)
 }

@@ -89,6 +89,7 @@ func WriteErrorResponseNoHeader(response *restful.Response, request *restful.Req
 	// Generate error response.
 	errorResponse := ApiErrorResponse{}
 	apiErrorCode, ok := err.(S3Error)
+	log.Debugf("********apiErrorCode=%+v, pk=%v\n", apiErrorCode, ok)
 	if ok {
 		errorResponse.AwsErrorCode = apiErrorCode.AwsErrorCode()
 		errorResponse.Message = apiErrorCode.Description()
@@ -96,6 +97,7 @@ func WriteErrorResponseNoHeader(response *restful.Response, request *restful.Req
 		errorResponse.AwsErrorCode = "InternalError"
 		errorResponse.Message = "We encountered an internal error, please try again."
 	}
+	log.Debugf("*********errorResponse=%+v\n", errorResponse)
 	errorResponse.Resource = resource
 	errorResponse.HostId = helper.CONFIG.InstanceId
 

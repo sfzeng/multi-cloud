@@ -66,7 +66,6 @@ func (s *APIService) BucketPut(request *restful.Request, response *restful.Respo
 
 	body := ReadBody(request)
 	flag := false
-	backendName := "xxxx"
 	if body != nil && len(body) != 0 {
 		log.Infof("request body is not empty")
 		locationConf := CreateBucketLocationConfiguration{}
@@ -76,13 +75,12 @@ func (s *APIService) BucketPut(request *restful.Request, response *restful.Respo
 			WriteErrorResponse(response, request, s3error.ErrUnmarshalFailed)
 			return
 		}
-		backendName = locationConf.Location
-	}
-
-	if backendName != "" {
-		log.Infof("backendName is %v\n", backendName)
-		bucket.DefaultLocation = backendName
-		flag = s.isBackendExist(ctx, backendName)
+		backendName := locationConf.Location
+		if backendName != "" {
+			log.Infof("backendName is %v\n", backendName)
+			bucket.DefaultLocation = backendName
+			flag = s.isBackendExist(ctx, backendName)
+		}
 	}
 	if flag == false {
 		log.Errorf("default backend is not provided or it is not exist.")
