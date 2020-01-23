@@ -112,6 +112,18 @@ func checkValidationOfActions(actions []*s3.Action) error {
 	return nil
 }
 
+func validLcStatus(status string) bool {
+	switch status {
+	case "Enabled":
+	case "Disabled":
+		return true
+	default:
+		log.Errorln("invalid lc status:", status)
+	}
+
+	return false
+}
+
 func (s *APIService) BucketLifecyclePut(request *restful.Request, response *restful.Response) {
 	bucketName := request.PathParameter("bucketName")
 	log.Infof("received request for creating lifecycle of bucket: %s", bucketName)
@@ -167,6 +179,10 @@ func (s *APIService) BucketLifecyclePut(request *restful.Request, response *rest
 		//Assigning the status value to s3 status
 		log.Infof("status in rule file is %v\n", rule.Status)
 		s3Rule.Status = rule.Status
+		if !validLcStatus(s3Rule.Status) {
+			WriteErrorResponse(response, request, ErrMalformedXML)
+			return
+		}
 
 		//Assigning the filter, using convert function to convert xml struct to s3 struct
 		s3Rule.Filter = convertRuleFilterToS3Filter(rule.Filter)

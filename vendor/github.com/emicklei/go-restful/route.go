@@ -109,7 +109,7 @@ func (r Route) matchesContentType(mimeTypes string) bool {
 	if len(mimeTypes) == 0 {
 		// idempotent methods with (most-likely or guaranteed) empty content match missing Content-Type
 		m := r.Method
-		if m == "GET" || m == "HEAD" || m == "OPTIONS" || m == "DELETE" || m == "TRACE" || m == "PUT" {
+		if m == "GET" || m == "HEAD" || m == "OPTIONS" || m == "DELETE" || m == "TRACE" || m == "PUT" || m == "POST" {
 			return true
 		}
 		// proceed with default

@@ -27,6 +27,7 @@ import (
 	"github.com/opensds/multi-cloud/s3/pkg/utils"
 	pb "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
+	utils2 "github.com/opensds/multi-cloud/s3api/pkg/utils"
 )
 
 func getTierFromHeader(request *restful.Request) (types.StorageClass, error) {
@@ -184,7 +185,7 @@ func (s *APIService) ObjectCopy(request *restful.Request, response *restful.Resp
 
 	log.Infoln("srcBucket:", sourceBucketName, " srcObject:", sourceObjectName,
 		" targetBucket:", targetBucketName, " targetObject:", targetObjectName)
-	tmoutSec := sourceObject.Size / MiniSpeed
+	tmoutSec := utils2.GetTimeoutSec(sourceObject.Size)
 	opt := client.WithRequestTimeout(time.Duration(tmoutSec) * time.Second)
 	result, err := s.s3Client.CopyObject(ctx, &pb.CopyObjectRequest{
 		SrcBucketName:    sourceBucketName,

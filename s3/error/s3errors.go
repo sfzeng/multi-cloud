@@ -296,7 +296,7 @@ var ErrorCodeResponse = map[S3ErrorCode]S3ErrorStruct{
 	},
 	ErrInvalidRange: {
 		AwsErrorCode:   "InvalidRange",
-		Description:    "The requested range is not satisfiable",
+		Description:    "The requested range is not satisfiable.",
 		HttpStatusCode: http.StatusRequestedRangeNotSatisfiable,
 	},
 	ErrMalformedXML: {
@@ -321,7 +321,7 @@ var ErrorCodeResponse = map[S3ErrorCode]S3ErrorStruct{
 	},
 	ErrNoSuchBucket: {
 		AwsErrorCode:   "NoSuchBucket",
-		Description:    "The specified bucket does not exist",
+		Description:    "The specified bucket does not exist.",
 		HttpStatusCode: http.StatusNotFound,
 	},
 	ErrNoSuchBucketPolicy: {
@@ -351,7 +351,7 @@ var ErrorCodeResponse = map[S3ErrorCode]S3ErrorStruct{
 	},
 	ErrPreconditionFailed: {
 		AwsErrorCode:   "PreconditionFailed",
-		Description:    "At least one of the pre-conditions you specified did not hold",
+		Description:    "At least one of the pre-conditions you specified did not hold.",
 		HttpStatusCode: http.StatusPreconditionFailed,
 	},
 	ErrRequestTimeTooSkewed: {
@@ -641,8 +641,8 @@ var ErrorCodeResponse = map[S3ErrorCode]S3ErrorStruct{
 		HttpStatusCode: http.StatusBadRequest,
 	},
 	ErrNoSuchBucketLc: {
-		AwsErrorCode:   "NoSuchBucketLc",
-		Description:    "The specified bucket does not have LifeCycle configured.",
+		AwsErrorCode:   "NoSuchLifecycleConfiguration",
+		Description:    "The lifecycle configuration does not exist.",
 		HttpStatusCode: http.StatusNotFound,
 	},
 	ErrInvalidLc: {

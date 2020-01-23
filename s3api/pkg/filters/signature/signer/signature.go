@@ -85,7 +85,7 @@ func (sign *Signature) Filter(req *restful.Request, resp *restful.Response, chai
 		log.Infof("[%s], AuthTypeSigned:%v", req.Request.URL, authType)
 		if cred, err = signature.IsReqAuthenticated(req.Request); err != nil {
 			log.Errorf("[%s] reject: IsReqAuthenticated return false, err:%v\n", req.Request.URL, err)
-			s3.WriteErrorResponse(resp, req, s3error.ErrAccessDenied)
+			s3.WriteErrorResponse(resp, req, err)
 			return
 		}
 		// TODO: check bucket policy

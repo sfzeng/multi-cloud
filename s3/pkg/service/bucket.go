@@ -84,6 +84,7 @@ func (s *s3Service) CreateBucket(ctx context.Context, in *pb.Bucket, out *pb.Bas
 		if err == nil {
 			log.Error("Error get bucket: ", bucketName, ", with error", err)
 			err = ErrBucketAlreadyExists
+			return nil
 		}
 	}
 	//TODO FIXME

@@ -34,11 +34,9 @@ import (
 	"time"
 
 	. "github.com/opensds/multi-cloud/s3api/pkg/datatype"
-	//. "github.com/journeymidnight/yig/error"
 	. "github.com/opensds/multi-cloud/s3api/pkg/error"
 	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/credentials"
 	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/credentials/keystonecredentials"
-
 
 )
 

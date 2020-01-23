@@ -31,8 +31,6 @@ import (
 
 	. "github.com/opensds/multi-cloud/s3/error"
 	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/credentials"
-	//. "github.com/journeymidnight/yig/error"
-	//"github.com/journeymidnight/yig/iam/common"
 )
 
 // Verify if request has AWS Signature

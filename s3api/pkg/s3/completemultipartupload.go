@@ -66,7 +66,7 @@ func (s *APIService) CompleteMultipartUpload(request *restful.Request, response 
 		CompleteParts: completeParts,
 	})
 	if HandleS3Error(response, request, err, result.GetErrorCode()) != nil {
-		log.Errorf("unable to complete multipart. err:%v, errCode:%v", err, result.ErrorCode)
+		log.Errorf("unable to complete multipart. err:%v, errCode:%v", err, result.GetErrorCode())
 		return
 	}
 

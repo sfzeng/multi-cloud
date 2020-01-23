@@ -184,6 +184,7 @@ func (s *s3Service) InitMultipartUpload(ctx context.Context, in *pb.InitMultiPar
 		return err
 	}
 	out.UploadID = res.UploadId
+	log.Infoln("Init multi-part upload succeed, uploadId:", out.UploadID)
 
 	return nil
 }
@@ -481,13 +482,13 @@ func (s *s3Service) AbortMultipartUpload(ctx context.Context, in *pb.AbortMultip
 	if err != nil && isAdmin == false {
 		log.Error("get tenant id failed")
 		err = ErrInternalError
-		return err
+		return nil
 	}
 
 	bucket, err := s.MetaStorage.GetBucket(ctx, bucketName, true)
 	if err != nil {
 		log.Errorln("failed to get bucket from meta storage. err:", err)
-		return err
+		return nil
 	}
 
 	if !isAdmin {
@@ -497,15 +498,16 @@ func (s *s3Service) AbortMultipartUpload(ctx context.Context, in *pb.AbortMultip
 		default:
 			if bucket.TenantId != tenantId {
 				log.Errorln("bucket owner is not equal to request owner.")
-				return ErrBucketAccessForbidden
+				err = ErrBucketAccessForbidden
+				return nil
 			}
 		}
 	}
 
 	multipart, err := s.MetaStorage.GetMultipart(bucketName, objectKey, uploadId)
 	if err != nil {
-		log.Errorln("failed to get multipart info. err:", err)
-		return err
+		log.Errorf("failed to get multipart info, uploadId:%s, err:%v\n", uploadId, err)
+		return nil
 	}
 
 	backendName := multipart.Metadata.Location
@@ -514,12 +516,12 @@ func (s *s3Service) AbortMultipartUpload(ctx context.Context, in *pb.AbortMultip
 	backend, err := utils.GetBackend(ctx, s.backendClient, backendName)
 	if err != nil {
 		log.Errorln("failed to get backend client with err:", err)
-		return err
+		return nil
 	}
 	sd, err := driver.CreateStorageDriver(backend.Type, backend)
 	if err != nil {
 		log.Errorln("failed to create storage. err:", err)
-		return err
+		return nil
 	}
 
 	err = sd.AbortMultipartUpload(ctx, &pb.MultipartUpload{
@@ -528,14 +530,14 @@ func (s *s3Service) AbortMultipartUpload(ctx context.Context, in *pb.AbortMultip
 		UploadId: uploadId,
 		ObjectId: multipart.ObjectId})
 	if err != nil {
-		log.Errorln("failed to abort multipart. err:", err)
-		return err
+		log.Errorf("failed to get multipart info, uploadId:%s, err:%v\n", uploadId, err)
+		return nil
 	}
 
 	err = s.MetaStorage.DeleteMultipart(ctx, multipart)
 	if err != nil {
 		log.Errorln("failed to delete multipart. err:", err)
-		return err
+		return nil
 	}
 
 	log.Infoln("Abort multipart successfully.")
@@ -556,14 +558,14 @@ func (s *s3Service) ListObjectParts(ctx context.Context, in *pb.ListObjectPartsR
 	multipart, err := s.MetaStorage.GetMultipart(bucketName, objectKey, uploadId)
 	if err != nil {
 		log.Errorln("failed to get multipart info. err:", err)
-		return err
+		return nil
 	}
 
 	isAdmin, tenantId, _, err := util.GetCredentialFromCtx(ctx)
 	if err != nil {
 		log.Error("get tenant id failed")
 		err = ErrInternalError
-		return err
+		return nil
 	}
 
 	if !isAdmin {
@@ -573,7 +575,7 @@ func (s *s3Service) ListObjectParts(ctx context.Context, in *pb.ListObjectPartsR
 		default:
 			if multipart.Metadata.TenantId != tenantId {
 				err = ErrAccessDenied
-				return err
+				return nil
 			}
 		}
 	}

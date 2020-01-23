@@ -22,7 +22,12 @@ import (
 	"reflect"
 
 	log "github.com/sirupsen/logrus"
+	"strconv"
+	"math"
 )
+
+var DefaultMinSpeed int64 = 5
+var DefaultTimeoutSec int64 = 5
 
 //remove redundant elements
 func RvRepElement(arr []string) []string {
@@ -194,4 +199,20 @@ func RandSeq(n int, chs []rune) string {
 		b[i] = chs[rand.Intn(len(chs))]
 	}
 	return string(b)
+}
+
+func GetTimeoutSec(objSize int64) int64 {
+	minSpeed, err := strconv.ParseInt(os.Getenv("TRANSFER_SPEED_MIN"), 10, 64)
+	if err != nil || minSpeed > math.MaxInt64 || minSpeed < DefaultMinSpeed {
+		minSpeed = DefaultMinSpeed
+	}
+
+	tmoutSec := objSize / minSpeed
+	if tmoutSec < DefaultTimeoutSec {
+		tmoutSec = DefaultTimeoutSec
+	}
+
+	log.Debugf("tmoutSec=%d\n", tmoutSec)
+
+	return tmoutSec
 }
