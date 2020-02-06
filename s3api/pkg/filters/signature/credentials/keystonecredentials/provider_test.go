@@ -12,14 +12,14 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package keystonecredentials_test
+package keystonecredentials
 
 import (
 	"fmt"
 	"net/http"
 	"testing"
 
-	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/credentials/keystonecredentials"
+	"github.com/opensds/multi-cloud/s3api/pkg/signature/credentials/keystonecredentials"
 	th "github.com/opensds/multi-cloud/testhelper"
 	"github.com/opensds/multi-cloud/testhelper/gophercloudclient"
 )

@@ -22,7 +22,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/micro/go-micro/metadata"
-	c "github.com/opensds/multi-cloud/api/pkg/context"
+	c "github.com/opensds/multi-cloud/common/context"
 	log "github.com/sirupsen/logrus"
 )
 

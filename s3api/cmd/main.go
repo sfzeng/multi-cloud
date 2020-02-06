@@ -20,10 +20,10 @@ import (
 	"github.com/micro/go-web"
 	//"github.com/opensds/multi-cloud/s3api/pkg/backend"
 	//"github.com/opensds/multi-cloud/s3api/pkg/dataflow"
-	"github.com/opensds/multi-cloud/s3api/pkg/filters/context"
+	"github.com/opensds/multi-cloud/common/filters/context"
 	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/signer"
 	//"github.com/opensds/multi-cloud/s3api/pkg/filters/auth"
-	"github.com/opensds/multi-cloud/s3api/pkg/filters/logging"
+	"github.com/opensds/multi-cloud/common/filters/logging"
 	"github.com/opensds/multi-cloud/s3api/pkg/s3"
 	"github.com/opensds/multi-cloud/common/osdslog"
 )

@@ -24,7 +24,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 	log "github.com/sirupsen/logrus"
-	"github.com/opensds/multi-cloud/api/pkg/context"
+	"github.com/opensds/multi-cloud/common/context"
 	"github.com/opensds/multi-cloud/api/pkg/model"
 	"github.com/opensds/multi-cloud/api/pkg/utils"
 	"github.com/opensds/multi-cloud/api/pkg/utils/constants"
