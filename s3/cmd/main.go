@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	"github.com/micro/go-micro"
-	"github.com/opensds/multi-cloud/api/pkg/utils/obs"
 	_ "github.com/opensds/multi-cloud/s3/pkg/datastore"
 	"github.com/opensds/multi-cloud/s3/pkg/datastore/driver"
 	"github.com/opensds/multi-cloud/s3/pkg/datastore/yig/config"
@@ -29,6 +28,7 @@ import (
 	pb "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
 	_ "go.uber.org/automaxprocs"
+	"github.com/opensds/multi-cloud/common/osdslog"
 )
 
 func main() {
@@ -36,7 +36,7 @@ func main() {
 		micro.Name("s3"),
 	)
 
-	obs.InitLogs()
+	osdslog.InitLogs()
 	service.Init(micro.AfterStop(func() error {
 		driver.FreeCloser()
 		gc.Stop()

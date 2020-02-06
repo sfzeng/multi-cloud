@@ -23,7 +23,7 @@ import (
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/micro/go-micro/client"
-	"github.com/opensds/multi-cloud/api/pkg/utils/obs"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/obs"
 	backend "github.com/opensds/multi-cloud/backend/proto"
 	. "github.com/opensds/multi-cloud/s3/error"
 	"github.com/opensds/multi-cloud/s3/pkg/db"

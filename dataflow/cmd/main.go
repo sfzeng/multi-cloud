@@ -21,7 +21,7 @@ import (
 	"github.com/opensds/multi-cloud/dataflow/pkg/scheduler"
 	_ "github.com/opensds/multi-cloud/dataflow/pkg/scheduler/trigger/crontrigger"
 	pb "github.com/opensds/multi-cloud/dataflow/proto"
-	"github.com/opensds/multi-cloud/api/pkg/utils/obs"
+	"github.com/opensds/multi-cloud/common/osdslog"
 )
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 		micro.Name("dataflow"),
 	)
 
-	obs.InitLogs()
+	osdslog.InitLogs()
 	log.Info("Init dataflow service.")
 	service.Init()
 	pb.RegisterDataFlowHandler(service.Server(), handler.NewDataFlowService())

@@ -20,7 +20,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/micro/go-micro"
 	datamover "github.com/opensds/multi-cloud/datamover/pkg"
-	"github.com/opensds/multi-cloud/api/pkg/utils/obs"
+	"github.com/opensds/multi-cloud/common/osdslog"
 )
 
 func main() {
@@ -28,7 +28,7 @@ func main() {
 		micro.Name("datamover"),
 	)
 
-	obs.InitLogs()
+	osdslog.InitLogs()
 	log.Info("Init datamover serivice")
 	service.Init()
 

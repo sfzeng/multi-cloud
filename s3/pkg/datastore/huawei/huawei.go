@@ -21,7 +21,7 @@ import (
 
 	"encoding/base64"
 	"encoding/hex"
-	"github.com/opensds/multi-cloud/api/pkg/utils/obs"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/obs"
 	backendpb "github.com/opensds/multi-cloud/backend/proto"
 	. "github.com/opensds/multi-cloud/s3/error"
 	dscommon "github.com/opensds/multi-cloud/s3/pkg/datastore/common"

@@ -23,7 +23,7 @@ const (
 	AuthTokenHeader   = "X-Auth-Token"
 	DefaultPolicyPath = "/etc/multicloud/policy.json"
 )
-
+/*
 const (
 	StorageClassOpenSDSStandard = "STANDARD"
 	StorageClassAWSStandard     = "STANDARD"
@@ -46,3 +46,4 @@ const (
 	ListObjectsType2Int int32  = 2
 	ListObjectsType1Int int32  = 1
 )
+*/

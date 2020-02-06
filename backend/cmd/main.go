@@ -18,12 +18,12 @@ import (
 	"fmt"
 	"os"
 
-	micro "github.com/micro/go-micro"
+	"github.com/micro/go-micro"
 	"github.com/opensds/multi-cloud/backend/pkg/db"
 	handler "github.com/opensds/multi-cloud/backend/pkg/service"
 	"github.com/opensds/multi-cloud/backend/pkg/utils/config"
 	pb "github.com/opensds/multi-cloud/backend/proto"
-	"github.com/opensds/multi-cloud/api/pkg/utils/obs"
+	"github.com/opensds/multi-cloud/common/osdslog"
 )
 
 func main() {
@@ -33,7 +33,7 @@ func main() {
 		Endpoint: dbHost})
 	defer db.Exit()
 
-	obs.InitLogs()
+	osdslog.InitLogs()
 	service := micro.NewService(
 		micro.Name("backend"),
 	)

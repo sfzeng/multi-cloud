@@ -25,7 +25,7 @@ import (
 	//"github.com/opensds/multi-cloud/api/pkg/filters/auth"
 	"github.com/opensds/multi-cloud/api/pkg/filters/logging"
 	//"github.com/opensds/multi-cloud/api/pkg/s3"
-	"github.com/opensds/multi-cloud/api/pkg/utils/obs"
+	"github.com/opensds/multi-cloud/common/osdslog"
 )
 
 const (
@@ -39,7 +39,7 @@ func main() {
 	)
 	webService.Init()
 
-	obs.InitLogs()
+	osdslog.InitLogs()
 	wc := restful.NewContainer()
 	ws := new(restful.WebService)
 	ws.Path("/v1")

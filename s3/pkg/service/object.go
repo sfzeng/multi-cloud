@@ -25,8 +25,8 @@ import (
 
 	"github.com/journeymidnight/yig/helper"
 	"github.com/micro/go-micro/metadata"
-	"github.com/opensds/multi-cloud/api/pkg/common"
-	"github.com/opensds/multi-cloud/api/pkg/utils/constants"
+	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	. "github.com/opensds/multi-cloud/s3/error"
 	dscommon "github.com/opensds/multi-cloud/s3/pkg/datastore/common"
 	"github.com/opensds/multi-cloud/s3/pkg/datastore/driver"

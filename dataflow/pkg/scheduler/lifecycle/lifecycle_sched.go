@@ -24,8 +24,8 @@ import (
 
 	"github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/metadata"
-	"github.com/opensds/multi-cloud/api/pkg/common"
-	"github.com/opensds/multi-cloud/api/pkg/utils/constants"
+	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	"github.com/opensds/multi-cloud/dataflow/pkg/db"
 	"github.com/opensds/multi-cloud/dataflow/pkg/kafka"
 	. "github.com/opensds/multi-cloud/dataflow/pkg/model"
