@@ -22,7 +22,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/micro/go-micro/metadata"
-	"github.com/opensds/multi-cloud/api/pkg/common"
+	"github.com/opensds/multi-cloud/common/constants"
 	"github.com/opensds/multi-cloud/dataflow/pkg/db"
 	"github.com/opensds/multi-cloud/dataflow/pkg/model"
 	"github.com/opensds/multi-cloud/dataflow/pkg/plan"
@@ -33,7 +33,7 @@ import (
 
 func LoadAllPlans() {
 	ctx := metadata.NewContext(context.Background(), map[string]string{
-		common.CTX_KEY_IS_ADMIN: strconv.FormatBool(true),
+		constants.CTX_KEY_IS_ADMIN: strconv.FormatBool(true),
 	})
 
 	offset := model.DefaultOffset

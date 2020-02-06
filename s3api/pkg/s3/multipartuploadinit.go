@@ -16,17 +16,18 @@ package s3
 
 import (
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	pb "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
 
 	. "github.com/opensds/multi-cloud/s3/error"
+	"github.com/opensds/multi-cloud/common/utils"
 )
 
 func (s *APIService) MultiPartUploadInit(request *restful.Request, response *restful.Response) {
-	bucketName := request.PathParameter(common.REQUEST_PATH_BUCKET_NAME)
-	objectKey := request.PathParameter(common.REQUEST_PATH_OBJECT_KEY)
-	backendName := request.HeaderParameter(common.REQUEST_HEADER_STORAGE_CLASS)
+	bucketName := request.PathParameter(constants.REQUEST_PATH_BUCKET_NAME)
+	objectKey := request.PathParameter(constants.REQUEST_PATH_OBJECT_KEY)
+	backendName := request.HeaderParameter(constants.REQUEST_HEADER_STORAGE_CLASS)
 
 	log.Infof("received request: multipart init, objectkey=%s, bucketName=%s\n:",
 		objectKey, bucketName)
@@ -54,7 +55,7 @@ func (s *APIService) MultiPartUploadInit(request *restful.Request, response *res
 		return
 	}
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	location := ""
 	if backendName != "" {
 		// check if backend exist

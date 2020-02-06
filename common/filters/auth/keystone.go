@@ -28,8 +28,8 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	c "github.com/opensds/multi-cloud/common/context"
 	"github.com/opensds/multi-cloud/api/pkg/model"
-	"github.com/opensds/multi-cloud/api/pkg/utils"
-	"github.com/opensds/multi-cloud/api/pkg/utils/constants"
+	"github.com/opensds/multi-cloud/common/constants"
+	"github.com/opensds/multi-cloud/common/utils"
 )
 
 type Keystone struct {

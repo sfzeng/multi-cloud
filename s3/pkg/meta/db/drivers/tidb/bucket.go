@@ -22,7 +22,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/opensds/multi-cloud/api/pkg/common"
+	"github.com/opensds/multi-cloud/s3/pkg/utils/constants"
 	. "github.com/opensds/multi-cloud/s3/error"
 	"github.com/opensds/multi-cloud/s3/pkg/helper"
 	. "github.com/opensds/multi-cloud/s3/pkg/meta/types"
@@ -314,9 +314,9 @@ func (t *TidbClient) ListObjects(ctx context.Context, bucketName string, version
 	if filter == nil {
 		filter = make(map[string]string)
 	}
-	omarker := filter[common.KMarker]
-	delimiter := filter[common.KDelimiter]
-	prefix := filter[common.KPrefix]
+	omarker := filter[constants.KMarker]
+	delimiter := filter[constants.KDelimiter]
+	prefix := filter[constants.KPrefix]
 	for {
 		var loopcount int
 		var sqltext string
@@ -362,7 +362,7 @@ func (t *TidbClient) ListObjects(ctx context.Context, bucketName string, version
 				objectNum[name] = 0
 			}
 			objectNum[name] += 1
-			filter[common.KMarker] = name
+			filter[constants.KMarker] = name
 
 			if _, ok := objectMap[name]; !ok {
 				objectMap[name] = struct{}{}
@@ -387,7 +387,7 @@ func (t *TidbClient) ListObjects(ctx context.Context, bucketName string, version
 				n := strings.Index(subStr, delimiter)
 				if n != -1 {
 					prefixKey := prefix + string([]byte(subStr)[0:(n+1)])
-					filter[common.KMarker] = prefixKey[0:(len(prefixKey)-1)] + string(delimiter[len(delimiter)-1]+1)
+					filter[constants.KMarker] = prefixKey[0:(len(prefixKey)-1)] + string(delimiter[len(delimiter)-1]+1)
 					if prefixKey == omarker {
 						continue
 					}

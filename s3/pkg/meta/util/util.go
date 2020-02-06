@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"github.com/micro/go-micro/metadata"
-	"github.com/opensds/multi-cloud/api/pkg/common"
+	"github.com/opensds/multi-cloud/common/constants"
 	. "github.com/opensds/multi-cloud/s3/error"
 	log "github.com/sirupsen/logrus"
 	"github.com/xxtea/xxtea-go/xxtea"
@@ -35,13 +35,13 @@ func GetCredentialFromCtx(ctx context.Context) (isAdmin bool, tenantId string, u
 	}
 
 	isAdmin = false
-	isAdminStr, _ := md[common.CTX_KEY_IS_ADMIN]
-	if isAdminStr == common.CTX_VAL_TRUE {
+	isAdminStr, _ := md[constants.CTX_KEY_IS_ADMIN]
+	if isAdminStr == constants.CTX_VAL_TRUE {
 		isAdmin = true
 	}
 
-	tenantId, ok = md[common.CTX_KEY_TENANT_ID]
-	userId, ok = md[common.CTX_KEY_USER_ID]
+	tenantId, ok = md[constants.CTX_KEY_TENANT_ID]
+	userId, ok = md[constants.CTX_KEY_USER_ID]
 
 	log.Debugf("isAdmin=%v, tenantId=%s, userId=%s, err=%v\n", isAdmin, tenantId, userId, err)
 	return

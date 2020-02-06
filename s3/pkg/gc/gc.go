@@ -10,12 +10,12 @@ import (
 	"github.com/opensds/multi-cloud/s3/pkg/meta/types"
 
 	"github.com/micro/go-micro/metadata"
-	"github.com/opensds/multi-cloud/api/pkg/common"
 	"github.com/opensds/multi-cloud/s3/pkg/datastore/driver"
 	"github.com/opensds/multi-cloud/s3/pkg/meta"
 	"github.com/opensds/multi-cloud/s3/pkg/utils"
 	pb "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
+	"github.com/opensds/multi-cloud/common/constants"
 )
 
 var CTX context.Context
@@ -86,7 +86,7 @@ func Run(mt *meta.Meta, bkservice bkd.BackendService) {
 
 func CleanFromBackend(obj *types.Object, bkservice bkd.BackendService) error {
 	ctx := metadata.NewContext(context.Background(), map[string]string{
-		common.CTX_KEY_IS_ADMIN: strconv.FormatBool(true),
+		constants.CTX_KEY_IS_ADMIN: strconv.FormatBool(true),
 	})
 	backend, err := utils.GetBackend(ctx, bkservice, obj.Location)
 	if err != nil {

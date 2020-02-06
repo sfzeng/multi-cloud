@@ -15,13 +15,34 @@
 package constants
 
 const (
-	//Signature parameter name
-	AuthorizationHeader = "Authorization"
-	SignDateHeader      = "X-Auth-Date"
+	MaxObjectSize           = 5 * 1024 * 1024 * 1024 // 5GB
+)
 
-	// Token parameter name
-	AuthTokenHeader   = "X-Auth-Token"
-	DefaultPolicyPath = "/etc/multicloud/policy.json"
+const (
+	KLastModified = "lastmodified"
+	KObjKey       = "objkey"
+	KStorageTier  = "tier"
+	KPrefix       = "prefix"
+	KMarker       = "marker"
+	KDelimiter    = "delimiter"
+	KVerMarker    = "verMarker"
+)
+
+const (
+	REQUEST_PATH_BUCKET_NAME         = "bucketName"
+	REQUEST_PATH_OBJECT_KEY          = "objectKey"
+	REQUEST_HEADER_CONTENT_LENGTH    = "Content-Length"
+	REQUEST_HEADER_STORAGE_CLASS     = "x-amz-storage-class"
+	REQUEST_HEADER_COPY_SOURCE       = "X-Amz-Copy-Source"
+	REQUEST_HEADER_COPY_SOURCE_RANGE = "X-Amz-Copy-Source-Range"
+	REQUEST_HEADER_ACL               = "X-Amz-Acl"
+	REQUEST_HEADER_CONTENT_MD5       = "Content-Md5"
+	REQUEST_HEADER_CONTENT_TYPE      = "Content-Type"
+)
+
+const (
+	REQUEST_FORM_KEY    = "Key"
+	REQUEST_FORM_BUCKET = "Bucket"
 )
 
 const (

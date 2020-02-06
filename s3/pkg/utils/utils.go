@@ -20,7 +20,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"github.com/micro/go-micro/metadata"
-	"github.com/opensds/multi-cloud/api/pkg/common"
 	"github.com/opensds/multi-cloud/backend/proto"
 	log "github.com/sirupsen/logrus"
 )
@@ -116,6 +115,10 @@ const (
 	RequestType_Lifecycle = "lifecycle"
 )
 
+const (
+	CTX_REPRE_TENANT    = "Representedtenantid"
+)
+
 func Md5Content(data []byte) (base64Encoded, hexEncoded string) {
 	md5ctx := md5.New()
 	md5ctx.Write(data)
@@ -145,7 +148,7 @@ func GetBackend(ctx context.Context, backedClient backend.BackendService, backen
 func SetRepresentTenant(ctx context.Context, requestTenant, sourceTenant string) context.Context {
 	if requestTenant != sourceTenant {
 		md, _ := metadata.FromContext(ctx)
-		md[common.CTX_REPRE_TENANT] = sourceTenant
+		md[CTX_REPRE_TENANT] = sourceTenant
 		ctx = metadata.NewContext(ctx, md)
 	}
 

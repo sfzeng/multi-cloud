@@ -20,18 +20,18 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/common/utils"
 	"github.com/opensds/multi-cloud/s3api/pkg/s3/datatype"
 	. "github.com/opensds/multi-cloud/s3/error"
-
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	pb "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
 )
 
 // ObjectPartCopy copy object from http header x-amz-copy-source as a part for multipart
 func (s *APIService) ObjectPartCopy(request *restful.Request, response *restful.Response) {
-	targetBucketName := request.PathParameter(common.REQUEST_PATH_BUCKET_NAME)
-	targetObjectName := request.PathParameter(common.REQUEST_PATH_OBJECT_KEY)
+	targetBucketName := request.PathParameter(constants.REQUEST_PATH_BUCKET_NAME)
+	targetObjectName := request.PathParameter(constants.REQUEST_PATH_OBJECT_KEY)
 
 	log.Infof("received request: Copy object part, target bucket[%v], target object[%s]", targetBucketName, targetObjectName)
 
@@ -57,7 +57,7 @@ func (s *APIService) ObjectPartCopy(request *restful.Request, response *restful.
 	}
 
 	// copy source is of form: /bucket-name/object-name?versionId=xxxxxx
-	copySource := request.HeaderParameter(common.REQUEST_HEADER_COPY_SOURCE)
+	copySource := request.HeaderParameter(constants.REQUEST_HEADER_COPY_SOURCE)
 
 	// Skip the first element if it is '/', split the rest.
 	if strings.HasPrefix(copySource, "/") {
@@ -104,7 +104,7 @@ func (s *APIService) ObjectPartCopy(request *restful.Request, response *restful.
 		return
 	}
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	getObjMetaRes, err := s.s3Client.GetObjectMeta(ctx, &pb.Object{
 		ObjectKey:  sourceObjectName,
 		BucketName: sourceBucketName,
@@ -122,7 +122,7 @@ func (s *APIService) ObjectPartCopy(request *restful.Request, response *restful.
 	}
 
 	var readOffset, readLength int64
-	copySourceRangeString := request.HeaderParameter(common.REQUEST_HEADER_COPY_SOURCE_RANGE)
+	copySourceRangeString := request.HeaderParameter(constants.REQUEST_HEADER_COPY_SOURCE_RANGE)
 	if copySourceRangeString == "" {
 		readOffset = 0
 		readLength = getObjMetaRes.Object.Size

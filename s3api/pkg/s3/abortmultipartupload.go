@@ -2,7 +2,7 @@ package s3
 
 import (
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/common/utils"
 	pb "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
 )
@@ -17,7 +17,7 @@ func (s *APIService) AbortMultipartUpload(request *restful.Request, response *re
 	multipartUpload.Bucket = bucketName
 	multipartUpload.UploadId = uploadId
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	result, err := s.s3Client.AbortMultipartUpload(ctx, &pb.AbortMultipartRequest{BucketName:bucketName,ObjectKey:objectKey,UploadId:uploadId})
 	if HandleS3Error(response, request, err, result.GetErrorCode()) != nil {
 		log.Errorf("unable to abort multipart. err:%v, errCode:%v", err, result.GetErrorCode())

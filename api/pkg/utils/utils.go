@@ -15,30 +15,91 @@
 package utils
 
 import (
-	"encoding/json"
-	"errors"
-	"os"
-	"reflect"
+	"fmt"
+	"strconv"
+	"strings"
 
+	"github.com/emicklei/go-restful"
 	log "github.com/sirupsen/logrus"
+	"reflect"
 )
 
-//remove redundant elements
-func RvRepElement(arr []string) []string {
-	result := []string{}
-	for i := 0; i < len(arr); i++ {
-		flag := true
-		for j := range result {
-			if arr[i] == result[j] {
-				flag = false
-				break
-			}
+const (
+	MaxPaginationLimit      = 1000
+	DefaultPaginationLimit  = MaxPaginationLimit
+	DefaultPaginationOffset = 0
+	MaxObjectSize           = 5 * 1024 * 1024 * 1024 // 5GB
+	SortDirectionAsc        = "asc"
+	SortDirectionDesc       = "desc"
+	DefaultPolicyPath = "/etc/multicloud/policy.json"
+)
+
+const (
+	KLimit        = "limit"
+	KOffset       = "offset"
+	KSort         = "sort"
+)
+
+func GetPaginationParam(request *restful.Request) (int32, int32, error) {
+	limit := int32(DefaultPaginationLimit)
+	offset := int32(DefaultPaginationOffset)
+
+	if request.QueryParameter(KLimit) != "" {
+		limitVal, err := strconv.Atoi(request.QueryParameter("limit"))
+		if err != nil {
+			log.Errorf("limit is invalid: %v", err)
+			return limit, offset, err
 		}
-		if flag == true {
-			result = append(result, arr[i])
+		if limit > int32(limitVal) {
+			limit = int32(limitVal)
 		}
 	}
-	return result
+
+	if request.QueryParameter(KOffset) != "" {
+		offsetVal, err := strconv.Atoi(request.QueryParameter("offset"))
+		if err != nil {
+			log.Errorf("offset is invalid: %v", err)
+			return limit, offset, err
+		}
+		offset = int32(offsetVal)
+	}
+	return limit, offset, nil
+}
+
+// An example of sort key parameter will be like this: sort=key1:asc,key2:desc
+func GetSortParam(request *restful.Request) (sortKeys []string, sortDirs []string, err error) {
+	sortStr := request.QueryParameter(KSort)
+	if sortStr != "" {
+		return
+	}
+
+	sortStr = strings.TrimSpace(sortStr)
+	for _, sort := range strings.Split(sortStr, ",") {
+		parts := strings.Split(sort, ":")
+		switch {
+		case len(parts) > 2:
+			err = fmt.Errorf("invalid sort value %s", sort)
+			return
+		case len(parts) == 1:
+			parts = append(parts, SortDirectionAsc)
+		}
+		sortKeys = append(sortKeys, parts[0])
+		sortDirs = append(sortDirs, parts[1])
+	}
+	return
+}
+
+func GetFilter(request *restful.Request, filterOpts []string) (map[string]string, error) {
+
+	filter := make(map[string]string)
+	for _, opt := range filterOpts {
+		v := request.QueryParameter(opt)
+		if v == "" {
+			continue
+		}
+		filter[opt] = v
+	}
+	return filter, nil
 }
 
 func Contained(obj, target interface{}) bool {
@@ -58,127 +119,5 @@ func Contained(obj, target interface{}) bool {
 		return false
 	}
 	return false
-}
-
-func MergeGeneralMaps(maps ...map[string]interface{}) map[string]interface{} {
-	var out = make(map[string]interface{})
-	for _, m := range maps {
-		for k, v := range m {
-			out[k] = v
-		}
-	}
-	return out
-}
-
-func MergeStringMaps(maps ...map[string]string) map[string]string {
-	var out = make(map[string]string)
-	for _, m := range maps {
-		for k, v := range m {
-			out[k] = v
-		}
-	}
-	return out
-}
-
-func PathExists(path string) (bool, error) {
-	_, err := os.Stat(path)
-	if err == nil {
-		return true, nil
-	}
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return false, err
-}
-
-func Retry(retryNum int, desc string, silent bool, fn func(retryIdx int, lastErr error) error) error {
-	var err error
-	for i := 0; i < retryNum; i++ {
-		if err = fn(i, err); err != nil {
-			if !silent {
-				log.Errorf("%s:%s, retry %d time(s)", desc, err, i+1)
-			}
-		} else {
-			return nil
-		}
-	}
-	if !silent {
-		log.Errorf("%s retry exceed the max retry times(%d).", desc, retryNum)
-	}
-	return err
-}
-
-// StructToMap ...
-func StructToMap(structObj interface{}) (map[string]interface{}, error) {
-	jsonStr, err := json.Marshal(structObj)
-	if nil != err {
-		return nil, err
-	}
-
-	var result map[string]interface{}
-	err = json.Unmarshal(jsonStr, &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-// Epsilon ...
-const Epsilon float64 = 0.00000001
-
-// IsFloatEqual ...
-func IsFloatEqual(a, b float64) bool {
-	if (a-b) < Epsilon && (b-a) < Epsilon {
-		return true
-	}
-
-	return false
-}
-
-// IsEqual ...
-func IsEqual(key string, value interface{}, reqValue interface{}) (bool, error) {
-	switch value.(type) {
-	case bool:
-		v, ok1 := value.(bool)
-		r, ok2 := reqValue.(bool)
-
-		if ok1 && ok2 {
-			if v == r {
-				return true, nil
-			}
-
-			return false, nil
-		}
-
-		return false, errors.New("the type of " + key + " must be bool")
-	case float64:
-		v, ok1 := value.(float64)
-		r, ok2 := reqValue.(float64)
-
-		if ok1 && ok2 {
-			if IsFloatEqual(v, r) {
-				return true, nil
-			}
-
-			return false, nil
-		}
-
-		return false, errors.New("the type of " + key + " must be float64")
-	case string:
-		v, ok1 := value.(string)
-		r, ok2 := reqValue.(string)
-		if ok1 && ok2 {
-			if v == r {
-				return true, nil
-			}
-
-			return false, nil
-		}
-
-		return false, errors.New("the type of " + key + " must be string")
-	default:
-		return false, errors.New("the type of " + key + " must be bool or float64 or string")
-	}
 }
 

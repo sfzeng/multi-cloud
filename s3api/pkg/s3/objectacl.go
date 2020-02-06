@@ -21,22 +21,23 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	"github.com/opensds/multi-cloud/s3api/pkg/s3/datatype"
 	"github.com/opensds/multi-cloud/s3/error"
 	pb "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
+	"github.com/opensds/multi-cloud/common/utils"
 )
 
 func (s *APIService) ObjectAclPut(request *restful.Request, response *restful.Response) {
-	bucketName := strings.ToLower(request.PathParameter(common.REQUEST_PATH_BUCKET_NAME))
-	objectKey := request.PathParameter(common.REQUEST_PATH_OBJECT_KEY)
+	bucketName := strings.ToLower(request.PathParameter(constants.REQUEST_PATH_BUCKET_NAME))
+	objectKey := request.PathParameter(constants.REQUEST_PATH_OBJECT_KEY)
 	log.Infof("received request: PUT bucket[name=%s] object[name=%s] acl\n", bucketName, objectKey)
 
 	var err error
 	var acl datatype.Acl
 	var policy datatype.AccessControlPolicy
-	if _, ok := request.Request.Header[common.REQUEST_HEADER_ACL]; ok {
+	if _, ok := request.Request.Header[constants.REQUEST_HEADER_ACL]; ok {
 		acl, err = getAclFromHeader(request)
 		if err != nil {
 			WriteErrorResponse(response, request, err)
@@ -68,7 +69,7 @@ func (s *APIService) ObjectAclPut(request *restful.Request, response *restful.Re
 		acl = newCannedAcl
 	}
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	res, err := s.s3Client.PutObjACL(ctx, &pb.PutObjACLRequest{ACLConfig: &pb.ObjACL{BucketName: bucketName,
 		ObjectKey: objectKey, CannedAcl: acl.CannedAcl}})
 	if err != nil || res.ErrorCode != int32(s3error.ErrNoErr) {
@@ -81,11 +82,11 @@ func (s *APIService) ObjectAclPut(request *restful.Request, response *restful.Re
 }
 
 func (s *APIService) ObjectAclGet(request *restful.Request, response *restful.Response) {
-	bucketName := strings.ToLower(request.PathParameter(common.REQUEST_PATH_BUCKET_NAME))
-	objectKey := request.PathParameter(common.REQUEST_PATH_OBJECT_KEY)
+	bucketName := strings.ToLower(request.PathParameter(constants.REQUEST_PATH_BUCKET_NAME))
+	objectKey := request.PathParameter(constants.REQUEST_PATH_OBJECT_KEY)
 	log.Infof("received request: GET bucket[name=%s] object[name=%s] acl\n", bucketName, objectKey)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	object, err := s.getObjectMeta(ctx, bucketName, objectKey, "")
 	if err != nil {
 		log.Error("failed to get object[%s] meta", objectKey)

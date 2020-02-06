@@ -21,7 +21,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	cutils "github.com/opensds/multi-cloud/common/utils"
 	"github.com/opensds/multi-cloud/s3api/pkg/s3/datatype"
 	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	. "github.com/opensds/multi-cloud/s3/error"
@@ -43,7 +43,7 @@ func (s *APIService) BucketGet(request *restful.Request, response *restful.Respo
 	}
 	req.Bucket = bucketName
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	lsRsp, err := s.s3Client.ListObjects(ctx, &req)
 	if HandleS3Error(response, request, err, lsRsp.GetErrorCode()) != nil {
 		log.Errorf("get bucket[%s] failed, err=%v, errCode=%d\n", bucketName, err, lsRsp.GetErrorCode())
@@ -187,7 +187,7 @@ func (s *APIService) HeadBucket(request *restful.Request, response *restful.Resp
 
 	var err error
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	_, err = s.getBucketMeta(ctx, bucketName)
 	if err != nil {
 		log.Errorf("get bucket[%s] failed, err=%v\n", bucketName, err)

@@ -2,7 +2,7 @@ package s3
 
 import (
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/common/utils"
 	"github.com/opensds/multi-cloud/s3api/pkg/s3/datatype"
 	pb "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
@@ -20,7 +20,7 @@ func (s *APIService) ListObjectParts(request *restful.Request, response *restful
 		return
 	}
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	listObjectPartsRes, err := s.s3Client.ListObjectParts(ctx, &pb.ListObjectPartsRequest{
 		BucketName:       bucketName,
 		ObjectKey:        objectKey,

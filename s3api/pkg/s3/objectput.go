@@ -23,20 +23,21 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	"github.com/opensds/multi-cloud/s3/error"
 	"github.com/opensds/multi-cloud/s3/proto"
 	pb "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
+	"github.com/opensds/multi-cloud/common/utils"
 )
 
 var ChunkSize int = 2048
 
 //ObjectPut -
 func (s *APIService) ObjectPut(request *restful.Request, response *restful.Response) {
-	bucketName := request.PathParameter(common.REQUEST_PATH_BUCKET_NAME)
-	objectKey := request.PathParameter(common.REQUEST_PATH_OBJECT_KEY)
-	backendName := request.HeaderParameter(common.REQUEST_HEADER_STORAGE_CLASS)
+	bucketName := request.PathParameter(constants.REQUEST_PATH_BUCKET_NAME)
+	objectKey := request.PathParameter(constants.REQUEST_PATH_OBJECT_KEY)
+	backendName := request.HeaderParameter(constants.REQUEST_HEADER_STORAGE_CLASS)
 	url := request.Request.URL
 	if strings.HasSuffix(url.String(), "/") {
 		objectKey = objectKey + "/"
@@ -95,7 +96,7 @@ func (s *APIService) ObjectPut(request *restful.Request, response *restful.Respo
 	}
 
 	// check if specific bucket exist
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	bucketMeta, err := s.getBucketMeta(ctx, bucketName)
 	if err != nil {
 		log.Errorln("failed to get bucket meta. err:", err)
@@ -174,7 +175,7 @@ func (s *APIService) ObjectPut(request *restful.Request, response *restful.Respo
 
 func getSize(request *restful.Request, response *restful.Response) (int64, error) {
 	// get content-length
-	contentLenght := request.HeaderParameter(common.REQUEST_HEADER_CONTENT_LENGTH)
+	contentLenght := request.HeaderParameter(constants.REQUEST_HEADER_CONTENT_LENGTH)
 	size, err := strconv.ParseInt(contentLenght, 10, 64)
 	if err != nil {
 		log.Infof("parse contentLenght[%s] failed, err:%v\n", contentLenght, err)
@@ -184,10 +185,10 @@ func getSize(request *restful.Request, response *restful.Response) (int64, error
 
 	log.Infof("object size is %v\n", size)
 
-	if size > common.MaxObjectSize {
+	if size > constants.MaxObjectSize {
 		log.Infof("invalid contentLenght:%s\n", contentLenght)
 		errMsg := fmt.Sprintf("invalid contentLenght[%s], it should be less than %d and more than 0",
-			contentLenght, common.MaxObjectSize)
+			contentLenght, constants.MaxObjectSize)
 		err := errors.New(errMsg)
 		WriteErrorResponse(response, request, err)
 		return size, err

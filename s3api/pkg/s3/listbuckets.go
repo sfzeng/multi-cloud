@@ -18,10 +18,11 @@ import (
 	"time"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	cutils "github.com/opensds/multi-cloud/common/utils"
 	"github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
 	. "github.com/opensds/multi-cloud/s3api/pkg/s3/datatype"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils"
 )
 
 func parseListBuckets(list *s3.ListBucketsResponse) ListBucketsResponse {
@@ -40,12 +41,9 @@ func parseListBuckets(list *s3.ListBucketsResponse) ListBucketsResponse {
 }
 
 func (s *APIService) ListBuckets(request *restful.Request, response *restful.Response) {
-	/*if !policy.Authorize(request, response, "bucket:list") {
-		return
-	}*/
 	log.Infof("Received request for all buckets")
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	rsp, err := s.s3Client.ListBuckets(ctx, &s3.BaseRequest{})
 	if HandleS3Error(response, request, err, rsp.GetErrorCode()) != nil {
 		log.Errorf("list bucket failed, err=%v, errCode=%d\n", err, rsp.GetErrorCode())
@@ -54,7 +52,7 @@ func (s *APIService) ListBuckets(request *restful.Request, response *restful.Res
 
 	resp := parseListBuckets(rsp)
 	resp.Owner = Owner{}
-	resp.Owner.ID = common.GetOwner(request)
+	resp.Owner.ID = utils.GetOwner(request)
 
 	// Encode response
 	encodedResp := EncodeResponse(resp)

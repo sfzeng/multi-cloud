@@ -18,7 +18,7 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/common/utils"
 	. "github.com/opensds/multi-cloud/s3/error"
 	"github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
@@ -47,7 +47,7 @@ func (s *APIService) ObjectDelete(request *restful.Request, response *restful.Re
 	if len(version) > 0 {
 		input.VersioId = version
 	}
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	rsp, err := s.s3Client.DeleteObject(ctx, &input)
 	if HandleS3Error(response, request, err, rsp.GetErrorCode()) != nil {
 		log.Errorf("delete object[%s] failed, err=%v, errCode=%d\n", objectName, err, rsp.GetErrorCode())

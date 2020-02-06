@@ -22,13 +22,13 @@ import (
 
 	"github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/metadata"
-	"github.com/opensds/multi-cloud/api/pkg/common"
 	"github.com/opensds/multi-cloud/datamover/pkg/drivers/https"
 	. "github.com/opensds/multi-cloud/datamover/pkg/utils"
 	"github.com/opensds/multi-cloud/datamover/proto"
 	"github.com/opensds/multi-cloud/s3/pkg/utils"
 	osdss3 "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
+	"github.com/opensds/multi-cloud/common/constants"
 )
 
 // If transition for an object is in-progress, then the next transition message will be abandoned.
@@ -39,7 +39,7 @@ func MoveObj(obj *osdss3.Object, targetLoc *LocationInfo, tmout time.Duration) e
 
 	// copy object
 	ctx, _ := context.WithTimeout(context.Background(), tmout)
-	ctx = metadata.NewContext(ctx, map[string]string{common.CTX_KEY_IS_ADMIN: strconv.FormatBool(true)})
+	ctx = metadata.NewContext(ctx, map[string]string{constants.CTX_KEY_IS_ADMIN: strconv.FormatBool(true)})
 	req := &osdss3.MoveObjectRequest{
 		SrcObject:        obj.ObjectKey,
 		SrcObjectVersion: obj.VersionId,
@@ -62,7 +62,7 @@ func MoveObj(obj *osdss3.Object, targetLoc *LocationInfo, tmout time.Duration) e
 
 func MultipartMoveObj(obj *osdss3.Object, targetLoc *LocationInfo, partSize int64, tmout time.Duration) error {
 	ctx, _ := context.WithTimeout(context.Background(), tmout)
-	ctx = metadata.NewContext(ctx, map[string]string{common.CTX_KEY_IS_ADMIN: strconv.FormatBool(true)})
+	ctx = metadata.NewContext(ctx, map[string]string{constants.CTX_KEY_IS_ADMIN: strconv.FormatBool(true)})
 
 	err := migration.MultipartCopyObj(ctx, obj, targetLoc, nil)
 	if err != nil {

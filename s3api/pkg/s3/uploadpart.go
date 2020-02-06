@@ -20,9 +20,10 @@ import (
 	"strconv"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/common/utils"
 	. "github.com/opensds/multi-cloud/s3/error"
 	pb "github.com/opensds/multi-cloud/s3/proto"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -32,7 +33,7 @@ func (s *APIService) UploadPart(request *restful.Request, response *restful.Resp
 
 	var incomingMd5 string
 	// get Content-Md5 sent by client and verify if valid
-	md5Bytes, err := checkValidMD5(request.HeaderParameter(common.REQUEST_HEADER_CONTENT_MD5))
+	md5Bytes, err := checkValidMD5(request.HeaderParameter(constants.REQUEST_HEADER_CONTENT_MD5))
 	if err != nil {
 		incomingMd5 = ""
 	} else {
@@ -63,7 +64,7 @@ func (s *APIService) UploadPart(request *restful.Request, response *restful.Resp
 		return
 	}
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	stream, err := s.s3Client.UploadPart(ctx)
 	defer stream.Close()
 

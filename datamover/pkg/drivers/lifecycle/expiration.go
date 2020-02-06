@@ -20,12 +20,12 @@ import (
 	"strconv"
 
 	"github.com/micro/go-micro/metadata"
-	"github.com/opensds/multi-cloud/api/pkg/common"
 	"github.com/opensds/multi-cloud/datamover/pkg/utils"
 	"github.com/opensds/multi-cloud/datamover/proto"
 	osdss3 "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
 	"time"
+	"github.com/opensds/multi-cloud/common/constants"
 )
 
 func doExpirationAction(acReq *datamover.LifecycleActionRequest) error {
@@ -43,7 +43,7 @@ func doExpirationAction(acReq *datamover.LifecycleActionRequest) error {
 	delMetaReq := osdss3.DeleteObjectInput{Bucket: bucketName, Key: objKey, VersioId: versionId}
 	// as expiration does not need to move data, so it's timeout time is not need to be too large.
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
-	ctx = metadata.NewContext(ctx, map[string]string{common.CTX_KEY_IS_ADMIN: strconv.FormatBool(true)})
+	ctx = metadata.NewContext(ctx, map[string]string{constants.CTX_KEY_IS_ADMIN: strconv.FormatBool(true)})
 	_, err := s3client.DeleteObject(ctx, &delMetaReq)
 	if err != nil {
 		// if it is deleted failed this time, it will be delete again in the next schedule round

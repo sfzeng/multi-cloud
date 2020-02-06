@@ -18,7 +18,7 @@ import (
 	"crypto/md5"
 	"encoding/xml"
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	cutils "github.com/opensds/multi-cloud/common/utils"
 	. "github.com/opensds/multi-cloud/s3/error"
 	"github.com/opensds/multi-cloud/s3/pkg/model"
 	"github.com/opensds/multi-cloud/s3/pkg/utils"
@@ -30,7 +30,7 @@ func (s *APIService) BucketVersioningPut(request *restful.Request, response *res
 	bucketName := request.PathParameter("bucketName")
 	log.Infof("received request for creating versioning of bucket: %s", bucketName)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	bucket, err := s.getBucketMeta(ctx, bucketName)
 	if err != nil {
 		WriteErrorResponse(response, request, err)

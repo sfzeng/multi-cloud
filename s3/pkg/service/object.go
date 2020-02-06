@@ -25,10 +25,8 @@ import (
 
 	"github.com/journeymidnight/yig/helper"
 	"github.com/micro/go-micro/metadata"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
 	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	. "github.com/opensds/multi-cloud/s3/error"
-	dscommon "github.com/opensds/multi-cloud/s3/pkg/datastore/common"
 	"github.com/opensds/multi-cloud/s3/pkg/datastore/driver"
 	"github.com/opensds/multi-cloud/s3/pkg/meta/types"
 	. "github.com/opensds/multi-cloud/s3/pkg/meta/types"
@@ -37,6 +35,7 @@ import (
 	"github.com/opensds/multi-cloud/s3/pkg/utils"
 	pb "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
+	"github.com/opensds/multi-cloud/s3/pkg/datastore/common"
 )
 
 var ChunkSize int = 2048
@@ -192,8 +191,8 @@ func (s *s3Service) PutObject(ctx context.Context, in pb.S3_PutObjectStream) err
 
 	log.Infoln("bucket location:", req.Location, " backendtype:", backend.Type, " endpoint:", backend.Endpoint)
 	bodyMd5 := req.Attrs["md5Sum"]
-	ctx = context.WithValue(ctx, dscommon.CONTEXT_KEY_SIZE, req.Size)
-	ctx = context.WithValue(ctx, dscommon.CONTEXT_KEY_MD5, bodyMd5)
+	ctx = context.WithValue(ctx, common.CONTEXT_KEY_SIZE, req.Size)
+	ctx = context.WithValue(ctx, common.CONTEXT_KEY_MD5, bodyMd5)
 	sd, err := driver.CreateStorageDriver(backend.Type, backend)
 	if err != nil {
 		log.Errorln("failed to create storage. err:", err)
@@ -685,7 +684,7 @@ func (s *s3Service) CopyObject(ctx context.Context, in *pb.CopyObjectRequest, ou
 		targetObject.StorageMeta = oldObj.StorageMeta
 		targetObject.ObjectId = oldObj.ObjectId
 	}
-	ctx = context.WithValue(ctx, dscommon.CONTEXT_KEY_SIZE, srcObject.Size)
+	ctx = context.WithValue(ctx, common.CONTEXT_KEY_SIZE, srcObject.Size)
 	res, err := targetSd.Put(ctx, limitedDataReader, targetObject)
 	if err != nil {
 		log.Errorln("failed to put data. err:", err)
@@ -1162,8 +1161,8 @@ func (s *s3Service) ListObjectsInternal(ctx context.Context, request *pb.ListObj
 
 	filt := make(map[string]string)
 	if request.Versioned {
-		filt[common.KMarker] = request.KeyMarker
-		filt[common.KVerMarker] = request.VersionIdMarker
+		filt[constants.KMarker] = request.KeyMarker
+		filt[constants.KVerMarker] = request.VersionIdMarker
 	} else if request.Version == constants.ListObjectsType2Int {
 		if request.ContinuationToken != "" {
 			var marker string
@@ -1172,16 +1171,16 @@ func (s *s3Service) ListObjectsInternal(ctx context.Context, request *pb.ListObj
 				err = ErrInvalidContinuationToken
 				return
 			}
-			filt[common.KMarker] = marker
+			filt[constants.KMarker] = marker
 		} else {
-			filt[common.KMarker] = request.StartAfter
+			filt[constants.KMarker] = request.StartAfter
 		}
 	} else { // version 1
-		filt[common.KMarker] = request.Marker
+		filt[constants.KMarker] = request.Marker
 	}
 
-	filt[common.KPrefix] = request.Prefix
-	filt[common.KDelimiter] = request.Delimiter
+	filt[constants.KPrefix] = request.Prefix
+	filt[constants.KDelimiter] = request.Delimiter
 	// currentlly, request.Filter only support filter by 'lastmodified' and 'tier'
 	for k, v := range request.Filter {
 		filt[k] = v

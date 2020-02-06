@@ -21,13 +21,14 @@ import (
 	"strconv"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	"github.com/opensds/multi-cloud/s3api/pkg/s3/datatype"
 	"github.com/opensds/multi-cloud/s3/error"
 	"github.com/opensds/multi-cloud/s3/pkg/helper"
 	"github.com/opensds/multi-cloud/s3/proto"
 	pb "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
+	"github.com/opensds/multi-cloud/common/utils"
 )
 
 // handle post object according to 'https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectPOST.html'
@@ -50,19 +51,19 @@ func (s *APIService) ObjectPost(request *restful.Request, response *restful.Resp
 		WriteErrorResponse(response, request, s3error.ErrMalformedPOSTRequest)
 		return
 	}
-	objectKey := formValues[common.REQUEST_FORM_KEY]
+	objectKey := formValues[constants.REQUEST_FORM_KEY]
 	if !isValidObjectName(objectKey) {
 		log.Errorf("got invalid object key: %s", objectKey)
 		WriteErrorResponse(response, request, s3error.ErrInvalidObjectName)
 		return
 	}
 
-	bucketName := request.PathParameter(common.REQUEST_PATH_BUCKET_NAME)
-	backendName := request.HeaderParameter(common.REQUEST_HEADER_STORAGE_CLASS)
-	formValues[common.REQUEST_FORM_BUCKET] = bucketName
+	bucketName := request.PathParameter(constants.REQUEST_PATH_BUCKET_NAME)
+	backendName := request.HeaderParameter(constants.REQUEST_HEADER_STORAGE_CLASS)
+	formValues[constants.REQUEST_FORM_BUCKET] = bucketName
 
 	// check if specific bucket exist
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	bucketMeta, err := s.getBucketMeta(ctx, bucketName)
 	if err != nil {
 		log.Errorf("failed to get bucket meta. err: %v", err)

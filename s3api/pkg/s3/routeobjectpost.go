@@ -18,7 +18,7 @@ import (
 	"regexp"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 )
 
 func (s *APIService) RouteObjectPost(request *restful.Request, response *restful.Response) {
@@ -28,7 +28,7 @@ func (s *APIService) RouteObjectPost(request *restful.Request, response *restful
 		s.CompleteMultipartUpload(request, response)
 	} else {
 		// check whether it is the post object operation.
-		contentType := request.HeaderParameter(common.REQUEST_HEADER_CONTENT_TYPE)
+		contentType := request.HeaderParameter(constants.REQUEST_HEADER_CONTENT_TYPE)
 		objectPostValidate := regexp.MustCompile("multipart/form-data*")
 		if contentType != "" && objectPostValidate.MatchString(contentType) {
 			s.ObjectPost(request, response)

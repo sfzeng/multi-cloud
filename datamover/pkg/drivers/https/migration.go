@@ -25,7 +25,6 @@ import (
 	"github.com/globalsign/mgo/bson"
 	"github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/metadata"
-	"github.com/opensds/multi-cloud/api/pkg/common"
 	"github.com/opensds/multi-cloud/backend/proto"
 	flowtype "github.com/opensds/multi-cloud/dataflow/pkg/model"
 	"github.com/opensds/multi-cloud/datamover/pkg/db"
@@ -34,6 +33,7 @@ import (
 	s3utils "github.com/opensds/multi-cloud/s3/pkg/utils"
 	osdss3 "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
+	"github.com/opensds/multi-cloud/common/constants"
 )
 
 var simuRoutines = 10
@@ -333,8 +333,8 @@ func runjob(in *pb.RunJobRequest) error {
 
 	// set context tiemout
 	ctx := metadata.NewContext(context.Background(), map[string]string{
-		common.CTX_KEY_USER_ID:   in.UserId,
-		common.CTX_KEY_TENANT_ID: in.TenanId,
+		constants.CTX_KEY_USER_ID:   in.UserId,
+		constants.CTX_KEY_TENANT_ID: in.TenanId,
 	})
 	// 60 means 1 minute, 2592000 means 30 days, 86400 means 1 day
 	dur := GetCtxTimeout("JOB_MAX_RUN_TIME", 60, 2592000, 86400)

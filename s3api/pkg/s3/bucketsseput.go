@@ -22,7 +22,7 @@ import (
 	"sync"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/common/utils"
 	"github.com/opensds/multi-cloud/s3/pkg/model"
 	"github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
@@ -36,7 +36,7 @@ func (s *APIService) BucketSSEPut(request *restful.Request, response *restful.Re
 	bucketName := request.PathParameter("bucketName")
 	log.Infof("received request for PUT bucket SSE: %s", bucketName)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	bucket, err := s.s3Client.GetBucket(ctx, &s3.Bucket{Name: bucketName})
 	if err != nil {
 		log.Errorf("get bucket failed, err=%v\n", err)

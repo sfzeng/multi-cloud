@@ -22,7 +22,7 @@ import (
 	"sync"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	cutils "github.com/opensds/multi-cloud/common/utils"
 	. "github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	. "github.com/opensds/multi-cloud/s3/error"
 	"github.com/opensds/multi-cloud/s3/pkg/model"
@@ -128,7 +128,7 @@ func (s *APIService) BucketLifecyclePut(request *restful.Request, response *rest
 	bucketName := request.PathParameter("bucketName")
 	log.Infof("received request for creating lifecycle of bucket: %s", bucketName)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	_, err := s.getBucketMeta(ctx, bucketName)
 	if err != nil {
 		log.Errorf("get bucket[%s] failed, err=%v\n", bucketName, err)

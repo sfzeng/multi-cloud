@@ -4,12 +4,12 @@ import (
 	"net/http"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	. "github.com/opensds/multi-cloud/s3api/pkg/s3/datatype"
 )
 
 func getAclFromHeader(request *restful.Request) (acl Acl, err error) {
-	acl.CannedAcl = request.HeaderParameter(common.REQUEST_HEADER_ACL)
+	acl.CannedAcl = request.HeaderParameter(constants.REQUEST_HEADER_ACL)
 	if acl.CannedAcl == "" {
 		acl.CannedAcl = "private"
 	}

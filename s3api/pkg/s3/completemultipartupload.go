@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/common/utils"
 	"github.com/opensds/multi-cloud/s3/pkg/model"
 	pb "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
@@ -58,7 +58,7 @@ func (s *APIService) CompleteMultipartUpload(request *restful.Request, response 
 		completeParts = append(completeParts, &pb.CompletePart{PartNumber: part.PartNumber, ETag: part.ETag})
 	}
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	result, err := s.s3Client.CompleteMultipartUpload(ctx, &pb.CompleteMultipartRequest{
 		BucketName:    bucketName,
 		ObjectKey:     objectKey,

@@ -5,7 +5,7 @@ import (
 	"sort"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/common/utils"
 	"github.com/opensds/multi-cloud/s3api/pkg/s3/datatype"
 	s3error "github.com/opensds/multi-cloud/s3/error"
 	pb "github.com/opensds/multi-cloud/s3/proto"
@@ -24,7 +24,7 @@ func (s *APIService) ListBucketUploadRecords(request *restful.Request, response 
 		return
 	}
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	listMultipartsResponse, err := s.s3Client.ListBucketUploadRecords(ctx, &pb.ListBucketUploadRequest{
 		BucketName:     bucketName,
 		Delimiter:      parameters.Delimiter,

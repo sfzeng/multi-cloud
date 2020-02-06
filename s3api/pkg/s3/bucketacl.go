@@ -21,7 +21,8 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/common/utils"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	"github.com/opensds/multi-cloud/s3api/pkg/s3/datatype"
 	"github.com/opensds/multi-cloud/s3/error"
 	pb "github.com/opensds/multi-cloud/s3/proto"
@@ -29,13 +30,13 @@ import (
 )
 
 func (s *APIService) BucketAclPut(request *restful.Request, response *restful.Response) {
-	bucketName := strings.ToLower(request.PathParameter(common.REQUEST_PATH_BUCKET_NAME))
+	bucketName := strings.ToLower(request.PathParameter(constants.REQUEST_PATH_BUCKET_NAME))
 	log.Infof("received request: PUT bucket[name=%s] acl\n", bucketName)
 
 	var err error
 	var acl datatype.Acl
 	var policy datatype.AccessControlPolicy
-	if _, ok := request.Request.Header[common.REQUEST_HEADER_ACL]; ok {
+	if _, ok := request.Request.Header[constants.REQUEST_HEADER_ACL]; ok {
 		acl, err = getAclFromHeader(request)
 		if err != nil {
 			WriteErrorResponse(response, request, err)
@@ -67,7 +68,7 @@ func (s *APIService) BucketAclPut(request *restful.Request, response *restful.Re
 		acl = newCannedAcl
 	}
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	res, err := s.s3Client.PutBucketACL(ctx, &pb.PutBucketACLRequest{ACLConfig: &pb.BucketACL{BucketName: bucketName, CannedAcl: acl.CannedAcl}})
 	if err != nil || res.ErrorCode != int32(s3error.ErrNoErr) {
 		WriteErrorResponse(response, request, GetFinalError(err, res.ErrorCode))
@@ -79,10 +80,10 @@ func (s *APIService) BucketAclPut(request *restful.Request, response *restful.Re
 }
 
 func (s *APIService) BucketAclGet(request *restful.Request, response *restful.Response) {
-	bucketName := strings.ToLower(request.PathParameter(common.REQUEST_PATH_BUCKET_NAME))
+	bucketName := strings.ToLower(request.PathParameter(constants.REQUEST_PATH_BUCKET_NAME))
 	log.Infof("received request: GET bucket[name=%s] acl\n", bucketName)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	bucket, err := s.getBucketMeta(ctx, bucketName)
 	if err != nil {
 		log.Error("failed to get bucket[%s] acl policy for bucket", bucketName)

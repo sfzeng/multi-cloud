@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/micro/go-micro/metadata"
-	"github.com/opensds/multi-cloud/api/pkg/common"
 	"github.com/opensds/multi-cloud/datamover/proto"
 	osdss3 "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
+	"github.com/opensds/multi-cloud/common/constants"
 )
 
 func doAbortUpload(acReq *datamover.LifecycleActionRequest) error {
@@ -18,7 +18,7 @@ func doAbortUpload(acReq *datamover.LifecycleActionRequest) error {
 	req := &osdss3.AbortMultipartRequest{BucketName: acReq.BucketName, ObjectKey: acReq.ObjKey, UploadId: acReq.UploadId}
 	// as abort multipart upload does not need to move data, so it's timeout time is not need to be too large.
 	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
-	ctx = metadata.NewContext(ctx, map[string]string{common.CTX_KEY_IS_ADMIN: strconv.FormatBool(true)})
+	ctx = metadata.NewContext(ctx, map[string]string{constants.CTX_KEY_IS_ADMIN: strconv.FormatBool(true)})
 	_, err := s3client.AbortMultipartUpload(ctx, req)
 	if err != nil {
 		// if it failed this time, it will be aborted again in the next schedule round

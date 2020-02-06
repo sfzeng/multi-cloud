@@ -24,8 +24,8 @@ import (
 
 	"github.com/micro/go-micro/client"
 	"github.com/micro/go-micro/metadata"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
-	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
+	"github.com/opensds/multi-cloud/common/constants"
+	//"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	"github.com/opensds/multi-cloud/dataflow/pkg/db"
 	"github.com/opensds/multi-cloud/dataflow/pkg/kafka"
 	. "github.com/opensds/multi-cloud/dataflow/pkg/model"
@@ -84,7 +84,7 @@ func ScheduleLifecycle() {
 	}
 
 	// List buckets with lifecycle configured.
-	ctx := metadata.NewContext(context.Background(), map[string]string{common.CTX_KEY_IS_ADMIN: strconv.FormatBool(true)})
+	ctx := metadata.NewContext(context.Background(), map[string]string{constants.CTX_KEY_IS_ADMIN: strconv.FormatBool(true)})
 	listRsp, err := s3client.ListBucketLifecycle(ctx, &s3.BaseRequest{})
 	if err != nil {
 		log.Errorf("[ScheduleLifecycle]list buckets failed: %v.\n", err)
@@ -222,7 +222,7 @@ func getObjects(r *InternalLifecycleRule, marker string, limit int32) ([]*osdss3
 	if len(r.Filter.Prefix) > 0 {
 		s3req.Prefix = r.Filter.Prefix
 	}
-	ctx := metadata.NewContext(context.Background(), map[string]string{common.CTX_KEY_IS_ADMIN: strconv.FormatBool(true)})
+	ctx := metadata.NewContext(context.Background(), map[string]string{constants.CTX_KEY_IS_ADMIN: strconv.FormatBool(true)})
 	log.Debugf("ListObjectsRequest:%+v\n", s3req)
 	s3rsp, err := s3client.ListObjects(ctx, &s3req)
 	if err != nil || s3rsp.GetErrorCode() != int32(s3error.ErrNoErr) {
@@ -235,7 +235,7 @@ func getObjects(r *InternalLifecycleRule, marker string, limit int32) ([]*osdss3
 
 func schedSortedAbortRules(inRules *InterRules) {
 	log.Debugln("schedSortedAbortRules begin ...")
-	ctx := metadata.NewContext(context.Background(), map[string]string{common.CTX_KEY_IS_ADMIN: strconv.FormatBool(true)})
+	ctx := metadata.NewContext(context.Background(), map[string]string{constants.CTX_KEY_IS_ADMIN: strconv.FormatBool(true)})
 	for _, r := range *inRules {
 		var uploadIdMarker = ""
 		for {

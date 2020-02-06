@@ -15,21 +15,30 @@
 package utils
 
 import (
+	"context"
+	"strconv"
 	"encoding/json"
 	"errors"
-	"math/rand"
 	"os"
 	"reflect"
 
-	log "github.com/sirupsen/logrus"
-	"strconv"
-	"math"
 	"github.com/emicklei/go-restful"
+	"github.com/micro/go-micro/metadata"
 	c "github.com/opensds/multi-cloud/common/context"
+	log "github.com/sirupsen/logrus"
+	. "github.com/opensds/multi-cloud/common/constants"
 )
 
-var DefaultMinSpeed int64 = 5
-var DefaultTimeoutSec int64 = 5
+func InitCtxWithAuthInfo(request *restful.Request) context.Context {
+	actx := request.Attribute(c.KContext).(*c.Context)
+	ctx := metadata.NewContext(context.Background(), map[string]string{
+		CTX_KEY_USER_ID:   actx.UserId,
+		CTX_KEY_TENANT_ID: actx.TenantId,
+		CTX_KEY_IS_ADMIN:  strconv.FormatBool(actx.IsAdmin),
+	})
+
+	return ctx
+}
 
 //remove redundant elements
 func RvRepElement(arr []string) []string {
@@ -188,38 +197,4 @@ func IsEqual(key string, value interface{}, reqValue interface{}) (bool, error) 
 	default:
 		return false, errors.New("the type of " + key + " must be bool or float64 or string")
 	}
-}
-
-func RandSeqWithAlnum(n int) string {
-	alnum := []rune("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	return RandSeq(n, alnum)
-}
-
-func RandSeq(n int, chs []rune) string {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = chs[rand.Intn(len(chs))]
-	}
-	return string(b)
-}
-
-func GetTimeoutSec(objSize int64) int64 {
-	minSpeed, err := strconv.ParseInt(os.Getenv("TRANSFER_SPEED_MIN"), 10, 64)
-	if err != nil || minSpeed > math.MaxInt64 || minSpeed < DefaultMinSpeed {
-		minSpeed = DefaultMinSpeed
-	}
-
-	tmoutSec := objSize / minSpeed
-	if tmoutSec < DefaultTimeoutSec {
-		tmoutSec = DefaultTimeoutSec
-	}
-
-	log.Debugf("tmoutSec=%d\n", tmoutSec)
-
-	return tmoutSec
-}
-
-func GetOwner(request *restful.Request) (ownerId string) {
-	actx := request.Attribute(c.KContext).(*c.Context)
-	return actx.TenantId
 }

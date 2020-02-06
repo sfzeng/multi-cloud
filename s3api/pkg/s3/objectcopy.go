@@ -21,17 +21,18 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/micro/go-micro/client"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
 	. "github.com/opensds/multi-cloud/s3/error"
 	"github.com/opensds/multi-cloud/s3/pkg/meta/types"
-	"github.com/opensds/multi-cloud/s3/pkg/utils"
+	cutils "github.com/opensds/multi-cloud/common/utils"
 	pb "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
+	"github.com/opensds/multi-cloud/s3/pkg/utils"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	utils2 "github.com/opensds/multi-cloud/s3api/pkg/utils"
 )
 
 func getTierFromHeader(request *restful.Request) (types.StorageClass, error) {
-	storageClassStr := request.HeaderParameter(common.REQUEST_HEADER_STORAGE_CLASS)
+	storageClassStr := request.HeaderParameter(constants.REQUEST_HEADER_STORAGE_CLASS)
 	if storageClassStr != "" {
 		return types.MatchStorageClassIndex(storageClassStr)
 	} else {
@@ -44,14 +45,14 @@ func getTierFromHeader(request *restful.Request) (types.StorageClass, error) {
 func (s *APIService) ObjectCopy(request *restful.Request, response *restful.Response) {
 	log.Infof("received request: Copy object")
 
-	targetBucketName := request.PathParameter(common.REQUEST_PATH_BUCKET_NAME)
-	targetObjectName := request.PathParameter(common.REQUEST_PATH_OBJECT_KEY)
+	targetBucketName := request.PathParameter(constants.REQUEST_PATH_BUCKET_NAME)
+	targetObjectName := request.PathParameter(constants.REQUEST_PATH_OBJECT_KEY)
 	//backendName := request.HeaderParameter(common.REQUEST_HEADER_STORAGE_CLASS)
 	log.Infof("received request: Copy object, objectkey=%s, bucketName=%s\n:",
 		targetObjectName, targetBucketName)
 
 	// copy source is of form: /bucket-name/object-name?versionId=xxxxxx
-	copySource := request.HeaderParameter(common.REQUEST_HEADER_COPY_SOURCE)
+	copySource := request.HeaderParameter(constants.REQUEST_HEADER_COPY_SOURCE)
 	if copySource == "" {
 		WriteErrorResponse(response, request, ErrInvalidCopySource)
 		return
@@ -116,7 +117,7 @@ func (s *APIService) ObjectCopy(request *restful.Request, response *restful.Resp
 
 	log.Infoln("sourceBucketName:", sourceBucketName, " sourceObjectName:", sourceObjectName, " sourceVersion:", sourceVersion)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	sourceObject, err := s.getObjectMeta(ctx, sourceBucketName, sourceObjectName, "")
 	if err != nil {
 		log.Errorln("unable to fetch object info. err:", err)

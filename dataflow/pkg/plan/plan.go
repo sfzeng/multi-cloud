@@ -25,7 +25,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	//c "github.com/opensds/multi-cloud/api/pkg/context"
 	"github.com/micro/go-micro/metadata"
-	"github.com/opensds/multi-cloud/api/pkg/common"
+	"github.com/opensds/multi-cloud/common/constants"
 	"github.com/opensds/multi-cloud/dataflow/pkg/db"
 	"github.com/opensds/multi-cloud/dataflow/pkg/kafka"
 	. "github.com/opensds/multi-cloud/dataflow/pkg/model"
@@ -284,8 +284,8 @@ func buildConn(reqConn *datamover.Connector, conn *Connector) {
 
 func Run(planId, tenantId, userId string) (bson.ObjectId, error) {
 	ctx := metadata.NewContext(context.Background(), map[string]string{
-		common.CTX_KEY_USER_ID:   userId,
-		common.CTX_KEY_TENANT_ID: tenantId,
+		constants.CTX_KEY_USER_ID:   userId,
+		constants.CTX_KEY_TENANT_ID: tenantId,
 	})
 	//Get information from database
 	plan, err := db.DbAdapter.GetPlan(ctx, planId)

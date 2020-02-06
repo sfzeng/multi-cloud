@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	cutils "github.com/opensds/multi-cloud/common/utils"
 	c "github.com/opensds/multi-cloud/common/context"
 	"github.com/opensds/multi-cloud/s3/error"
 	. "github.com/opensds/multi-cloud/s3api/pkg/s3/datatype"
@@ -28,10 +28,11 @@ import (
 	"github.com/opensds/multi-cloud/s3/proto"
 	pb "github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 )
 
 func (s *APIService) BucketPut(request *restful.Request, response *restful.Response) {
-	bucketName := strings.ToLower(request.PathParameter(common.REQUEST_PATH_BUCKET_NAME))
+	bucketName := strings.ToLower(request.PathParameter(constants.REQUEST_PATH_BUCKET_NAME))
 	if !isValidBucketName(bucketName) {
 		log.Errorln("invalid bucket name: ", bucketName)
 		WriteErrorResponse(response, request, s3error.ErrInvalidBucketName)
@@ -39,7 +40,7 @@ func (s *APIService) BucketPut(request *restful.Request, response *restful.Respo
 	}
 	log.Infof("received request: PUT bucket[name=%s]\n", bucketName)
 
-	if len(request.HeaderParameter(common.REQUEST_HEADER_CONTENT_LENGTH)) == 0 {
+	if len(request.HeaderParameter(constants.REQUEST_HEADER_CONTENT_LENGTH)) == 0 {
 		log.Errorf("missing content length")
 		WriteErrorResponse(response, request, s3error.ErrMissingContentLength)
 		return
@@ -52,7 +53,7 @@ func (s *APIService) BucketPut(request *restful.Request, response *restful.Respo
 		return
 	}
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	actx := request.Attribute(c.KContext).(*c.Context)
 	bucket := s3.Bucket{Name: bucketName}
 	bucket.TenantId = actx.TenantId

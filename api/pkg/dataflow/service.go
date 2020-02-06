@@ -22,12 +22,13 @@ import (
 	"github.com/emicklei/go-restful"
 	log "github.com/sirupsen/logrus"
 	"github.com/micro/go-micro/client"
-	"github.com/opensds/multi-cloud/api/pkg/common"
+	cutils "github.com/opensds/multi-cloud/common/utils"
 	c "github.com/opensds/multi-cloud/common/context"
 	"github.com/opensds/multi-cloud/api/pkg/policy"
 	"github.com/opensds/multi-cloud/backend/proto"
 	"github.com/opensds/multi-cloud/dataflow/proto"
 	"github.com/opensds/multi-cloud/s3/proto"
+	"github.com/opensds/multi-cloud/api/pkg/utils"
 )
 
 const (
@@ -55,7 +56,7 @@ func (s *APIService) ListPolicy(request *restful.Request, response *restful.Resp
 		return
 	}
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	res, err := s.dataflowClient.ListPolicy(ctx, &dataflow.ListPolicyRequest{})
 	if err != nil {
 		response.WriteError(http.StatusInternalServerError, err)
@@ -83,7 +84,7 @@ func (s *APIService) GetPolicy(request *restful.Request, response *restful.Respo
 	id := request.PathParameter("id")
 	log.Infof("Received request for policy[id=%s] details.", id)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	res, err := s.dataflowClient.GetPolicy(ctx, &dataflow.GetPolicyRequest{Id: id})
 	if err != nil {
 		response.WriteError(http.StatusInternalServerError, err)
@@ -127,7 +128,7 @@ func (s *APIService) CreatePolicy(request *restful.Request, response *restful.Re
 	}
 	//For debug --end
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	actx := request.Attribute(c.KContext).(*c.Context)
 	pol.TenantId = actx.TenantId
 	pol.UserId = actx.UserId
@@ -156,7 +157,7 @@ func (s *APIService) UpdatePolicy(request *restful.Request, response *restful.Re
 	}
 	log.Infof("Received request for update policy.body:%s\n", body)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	req := &dataflow.UpdatePolicyRequest{PolicyId: policyId, Body: string(body)}
 	res, err := s.dataflowClient.UpdatePolicy(ctx, req)
 	if err != nil {
@@ -185,7 +186,7 @@ func (s *APIService) DeletePolicy(request *restful.Request, response *restful.Re
 	id := request.PathParameter("id")
 	log.Infof("Received request for delete policy[id=%s] details.", id)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	res, err := s.dataflowClient.DeletePolicy(ctx, &dataflow.DeletePolicyRequest{Id: id})
 	if err != nil {
 		response.WriteError(http.StatusInternalServerError, err)
@@ -203,7 +204,7 @@ func (s *APIService) ListPlan(request *restful.Request, response *restful.Respon
 	log.Info("Received request for list plan.")
 
 	listPlanReq := &dataflow.ListPlanRequest{}
-	limit, offset, err := common.GetPaginationParam(request)
+	limit, offset, err := utils.GetPaginationParam(request)
 	if err != nil {
 		log.Errorf("get pagination parameters failed: %v\n", err)
 		response.WriteError(http.StatusInternalServerError, err)
@@ -212,7 +213,7 @@ func (s *APIService) ListPlan(request *restful.Request, response *restful.Respon
 	listPlanReq.Limit = limit
 	listPlanReq.Offset = offset
 
-	sortKeys, sortDirs, err := common.GetSortParam(request)
+	sortKeys, sortDirs, err := utils.GetSortParam(request)
 	if err != nil {
 		log.Errorf("get sort parameters failed: %v\n", err)
 		response.WriteError(http.StatusInternalServerError, err)
@@ -222,7 +223,7 @@ func (s *APIService) ListPlan(request *restful.Request, response *restful.Respon
 	listPlanReq.SortDirs = sortDirs
 
 	filterOpts := []string{"name", "type", "bucketname"}
-	filter, err := common.GetFilter(request, filterOpts)
+	filter, err := utils.GetFilter(request, filterOpts)
 	if err != nil {
 		log.Errorf("get filter failed: %v\n", err)
 		response.WriteError(http.StatusInternalServerError, err)
@@ -232,7 +233,7 @@ func (s *APIService) ListPlan(request *restful.Request, response *restful.Respon
 	}
 	listPlanReq.Filter = filter
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	res, err := s.dataflowClient.ListPlan(ctx, listPlanReq)
 	if err != nil {
 		response.WriteError(http.StatusInternalServerError, err)
@@ -261,7 +262,7 @@ func (s *APIService) GetPlan(request *restful.Request, response *restful.Respons
 	id := request.PathParameter("id")
 	log.Infof("Received request for plan[id=%s] details.\n", id)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	res, err := s.dataflowClient.GetPlan(ctx, &dataflow.GetPlanRequest{Id: id})
 	if err != nil {
 		response.WriteError(http.StatusInternalServerError, err)
@@ -305,7 +306,7 @@ func (s *APIService) CreatePlan(request *restful.Request, response *restful.Resp
 	}
 	//For debug --end
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	actx := request.Attribute(c.KContext).(*c.Context)
 	plan.TenantId = actx.TenantId
 	plan.UserId = actx.UserId
@@ -334,7 +335,7 @@ func (s *APIService) UpdatePlan(request *restful.Request, response *restful.Resp
 	}
 	log.Infof("Req body: %s.\n", string(body))
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	req := &dataflow.UpdatePlanRequest{PlanId: planId, Body: string(body)}
 	resp, err := s.dataflowClient.UpdatePlan(ctx, req)
 	if err != nil {
@@ -363,7 +364,7 @@ func (s *APIService) DeletePlan(request *restful.Request, response *restful.Resp
 	id := request.PathParameter("id")
 	log.Infof("Received request for delete plan[id=%s] details.\n", id)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	res, err := s.dataflowClient.DeletePlan(ctx, &dataflow.DeletePlanRequest{Id: id})
 	if err != nil {
 		response.WriteError(http.StatusInternalServerError, err)
@@ -381,7 +382,7 @@ func (s *APIService) RunPlan(request *restful.Request, response *restful.Respons
 	id := request.PathParameter("id")
 	log.Infof("Received request for run plan[id=%s] details.\n", id)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	res, err := s.dataflowClient.RunPlan(ctx, &dataflow.RunPlanRequest{Id: id})
 	if err != nil {
 		response.WriteError(http.StatusInternalServerError, err)
@@ -399,7 +400,7 @@ func (s *APIService) GetJob(request *restful.Request, response *restful.Response
 	id := request.PathParameter("id")
 	log.Infof("Received request jobs [id=%s] details.\n", id)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	res, err := s.dataflowClient.GetJob(ctx, &dataflow.GetJobRequest{Id: id})
 	if err != nil {
 		response.WriteError(http.StatusInternalServerError, err)
@@ -427,7 +428,7 @@ func (s *APIService) ListJob(request *restful.Request, response *restful.Respons
 	log.Infof("Received request for list jobs:%v.\n", request)
 
 	listJobReq := &dataflow.ListJobRequest{}
-	limit, offset, err := common.GetPaginationParam(request)
+	limit, offset, err := utils.GetPaginationParam(request)
 	if err != nil {
 		log.Errorf("get pagination parameters failed: %v\n", err)
 		response.WriteError(http.StatusInternalServerError, err)
@@ -436,7 +437,7 @@ func (s *APIService) ListJob(request *restful.Request, response *restful.Respons
 	listJobReq.Limit = limit
 	listJobReq.Offset = offset
 
-	sortKeys, sortDirs, err := common.GetSortParam(request)
+	sortKeys, sortDirs, err := utils.GetSortParam(request)
 	if err != nil {
 		log.Errorf("get sort parameters failed: %v\n", err)
 		response.WriteError(http.StatusInternalServerError, err)
@@ -446,7 +447,7 @@ func (s *APIService) ListJob(request *restful.Request, response *restful.Respons
 	listJobReq.SortDirs = sortDirs
 
 	filterOpts := []string{"planName", "type"}
-	filter, err := common.GetFilter(request, filterOpts)
+	filter, err := utils.GetFilter(request, filterOpts)
 	if err != nil {
 		log.Errorf("get filter failed: %v\n", err)
 		response.WriteError(http.StatusInternalServerError, err)
@@ -456,7 +457,7 @@ func (s *APIService) ListJob(request *restful.Request, response *restful.Respons
 	}
 	listJobReq.Filter = filter
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	res, err := s.dataflowClient.ListJob(ctx, listJobReq)
 	if err != nil {
 		response.WriteError(http.StatusInternalServerError, err)

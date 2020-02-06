@@ -23,7 +23,7 @@ import (
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 	"github.com/micro/go-micro/metadata"
-	"github.com/opensds/multi-cloud/api/pkg/common"
+	"github.com/opensds/multi-cloud/common/constants"
 	"github.com/opensds/multi-cloud/backend/pkg/model"
 	log "github.com/sirupsen/logrus"
 )
@@ -70,11 +70,11 @@ func UpdateContextFilter(ctx context.Context, m bson.M) error {
 		return errors.New("get context failed")
 	}
 
-	isAdmin, _ := md[common.CTX_KEY_IS_ADMIN]
-	if isAdmin != common.CTX_VAL_TRUE {
-		tenantId, _ := md[common.CTX_REPRE_TENANT]
+	isAdmin, _ := md[constants.CTX_KEY_IS_ADMIN]
+	if isAdmin != constants.CTX_VAL_TRUE {
+		tenantId, _ := md[constants.CTX_REPRE_TENANT]
 		if tenantId == "" {
-			tenantId, ok = md[common.CTX_KEY_TENANT_ID]
+			tenantId, ok = md[constants.CTX_KEY_TENANT_ID]
 			if !ok {
 				log.Error("get tenantid failed")
 				return errors.New("get tenantid failed")

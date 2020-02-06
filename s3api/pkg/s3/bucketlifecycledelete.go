@@ -16,7 +16,7 @@ package s3
 
 import (
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/common/utils"
 	"github.com/opensds/multi-cloud/s3/proto"
 	log "github.com/sirupsen/logrus"
 )
@@ -25,7 +25,7 @@ func (s *APIService) BucketLifecycleDelete(request *restful.Request, response *r
 	bucketName := request.PathParameter("bucketName")
 	log.Infof("received request for creating lifecycle of bucket: %s", bucketName)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	rsp, err := s.s3Client.DeleteBucketLifecycle(ctx, &s3.BaseRequest{Id: bucketName})
 	log.Infof("rsp:%s, err:%v\n", rsp, err)
 	if HandleS3Error(response, request, err, rsp.GetErrorCode()) != nil {

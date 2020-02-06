@@ -26,7 +26,6 @@ import (
 	"github.com/opensds/multi-cloud/s3api/pkg/utils/obs"
 	backend "github.com/opensds/multi-cloud/backend/proto"
 	. "github.com/opensds/multi-cloud/s3/error"
-	"github.com/opensds/multi-cloud/s3/pkg/db"
 	"github.com/opensds/multi-cloud/s3/pkg/gc"
 	"github.com/opensds/multi-cloud/s3/pkg/helper"
 	"github.com/opensds/multi-cloud/s3/pkg/meta"
@@ -55,9 +54,9 @@ type s3Service struct {
 }
 
 func NewS3Service() pb.S3Handler {
-	host := os.Getenv("DB_HOST")
-	dbstor := Database{Credential: "unkonwn", Driver: "tidb", Endpoint: host}
-	db.Init(&dbstor)
+	//host := os.Getenv("DB_HOST")
+	//dbstor := Database{Credential: "unkonwn", Driver: "tidb", Endpoint: host}
+	//db.Init(&dbstor)
 
 	initStorageClass()
 	cfg := meta.MetaConfig{

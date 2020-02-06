@@ -22,7 +22,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/micro/go-micro/client"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	cutils "github.com/opensds/multi-cloud/common/utils"
 	. "github.com/opensds/multi-cloud/s3api/pkg/s3/datatype"
 	s3error "github.com/opensds/multi-cloud/s3/error"
 	pb "github.com/opensds/multi-cloud/s3/proto"
@@ -56,7 +56,7 @@ func (s *APIService) ObjectGet(request *restful.Request, response *restful.Respo
 	rangestr := request.HeaderParameter("Range")
 	log.Infof("%v\n", rangestr)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	object, err := s.getObjectMeta(ctx, bucketName, objectKey, "")
 	if err != nil {
 		log.Errorln("get object meta failed. err:", err)
@@ -181,7 +181,7 @@ func (s *APIService) HeadObject(request *restful.Request, response *restful.Resp
 	versionId := request.Request.URL.Query().Get("versionId")
 	log.Infof("Received request for head object: bucket=%s, objectkey=%s, version=%s\n", bucketName, objectKey, versionId)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := cutils.InitCtxWithAuthInfo(request)
 	object, err := s.getObjectMeta(ctx, bucketName, objectKey, versionId)
 	if err != nil {
 		log.Errorf("head object[bucketname=%s, key=%s] failed, err=%v\n", bucketName, objectKey, err)

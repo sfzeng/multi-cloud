@@ -24,7 +24,7 @@ import (
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/opensds/multi-cloud/api/pkg/common"
+	"github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	. "github.com/opensds/multi-cloud/s3/error"
 	. "github.com/opensds/multi-cloud/s3/pkg/meta/types"
 	log "github.com/sirupsen/logrus"
@@ -69,22 +69,22 @@ func buildSql(ctx context.Context, filter map[string]string, sqltxt string) (str
 	const MaxObjectList = 10000
 	args := make([]interface{}, 0)
 
-	prefix := filter[common.KPrefix]
+	prefix := filter[constants.KPrefix]
 	if prefix != "" {
 		sqltxt += " and name like ?"
 		args = append(args, prefix+"%")
 		log.Debug("query prefix:", prefix)
 	}
-	if filter[common.KMarker] != "" {
+	if filter[constants.KMarker] != "" {
 		sqltxt += " and name >= ?"
-		args = append(args, filter[common.KMarker])
-		log.Debug("query marker:", filter[common.KMarker])
+		args = append(args, filter[constants.KMarker])
+		log.Debug("query marker:", filter[constants.KMarker])
 	}
 
 	// lifecycle management may need to filter by LastModified
-	if filter[common.KLastModified] != "" {
+	if filter[constants.KLastModified] != "" {
 		var tmFilter map[string]string
-		err := json.Unmarshal([]byte(filter[common.KLastModified]), &tmFilter)
+		err := json.Unmarshal([]byte(filter[constants.KLastModified]), &tmFilter)
 		if err != nil {
 			log.Errorf("unmarshal lastmodified value failed:%s\n", err)
 			return sqltxt, args, ErrInternalError
@@ -113,10 +113,10 @@ func buildSql(ctx context.Context, filter map[string]string, sqltxt string) (str
 	}
 
 	// lifecycle management may need to filter by StorageTier
-	if filter[common.KStorageTier] != "" {
-		tier, err := strconv.Atoi(filter[common.KStorageTier])
+	if filter[constants.KStorageTier] != "" {
+		tier, err := strconv.Atoi(filter[constants.KStorageTier])
 		if err != nil {
-			log.Errorf("invalid storage tier:%s\n", filter[common.KStorageTier])
+			log.Errorf("invalid storage tier:%s\n", filter[constants.KStorageTier])
 			return sqltxt, args, ErrInternalError
 		}
 
@@ -124,7 +124,7 @@ func buildSql(ctx context.Context, filter map[string]string, sqltxt string) (str
 		args = append(args, tier)
 	}
 
-	delimiter := filter[common.KDelimiter]
+	delimiter := filter[constants.KDelimiter]
 	if delimiter == "" {
 		sqltxt += " order by bucketname,name,version limit ?"
 		args = append(args, MaxObjectList)

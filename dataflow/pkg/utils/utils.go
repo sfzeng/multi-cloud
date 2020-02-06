@@ -19,7 +19,7 @@ import (
 	"errors"
 	"github.com/micro/go-log"
 	"github.com/micro/go-micro/metadata"
-	"github.com/opensds/multi-cloud/api/pkg/common"
+	"github.com/opensds/multi-cloud/common/constants"
 )
 
 const (
@@ -74,7 +74,7 @@ func GetTenantId(ctx context.Context) (string, error) {
 		return "", errors.New("get context failed")
 	}
 
-	tenantId, ok := md[common.CTX_KEY_TENANT_ID]
+	tenantId, ok := md[constants.CTX_KEY_TENANT_ID]
 	if !ok {
 		log.Log("get tenantid failed")
 		return "", errors.New("get tenantid failed")
@@ -90,7 +90,7 @@ func GetUserId(ctx context.Context) (string, error) {
 		return "", errors.New("get context failed")
 	}
 
-	userId, ok := md[common.CTX_KEY_USER_ID]
+	userId, ok := md[constants.CTX_KEY_USER_ID]
 	if !ok {
 		log.Log("get userid failed")
 		return "", errors.New("get userid failed")

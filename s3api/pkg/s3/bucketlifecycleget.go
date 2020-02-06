@@ -17,7 +17,7 @@ package s3
 import (
 	"fmt"
 	"github.com/emicklei/go-restful"
-	"github.com/opensds/multi-cloud/s3api/pkg/common"
+	"github.com/opensds/multi-cloud/common/utils"
 	. "github.com/opensds/multi-cloud/s3api/pkg/utils/constants"
 	. "github.com/opensds/multi-cloud/s3/error"
 	"github.com/opensds/multi-cloud/s3/pkg/model"
@@ -56,7 +56,7 @@ func (s *APIService) BucketLifecycleGet(request *restful.Request, response *rest
 	bucketName := request.PathParameter("bucketName")
 	log.Infof("received request for bucket details in GET lifecycle: %s", bucketName)
 
-	ctx := common.InitCtxWithAuthInfo(request)
+	ctx := utils.InitCtxWithAuthInfo(request)
 	rsp, err := s.s3Client.GetBucketLifecycle(ctx, &s3.BaseRequest{Id: bucketName})
 	if HandleS3Error(response, request, err, rsp.GetErrorCode()) != nil {
 		log.Errorf("get bucket[%s] lifecycle failed, err=%v, errCode=%d\n", bucketName, err, rsp.GetErrorCode())

@@ -27,7 +27,6 @@ import (
 	"github.com/opensds/multi-cloud/common/context"
 	"github.com/opensds/multi-cloud/api/pkg/model"
 	"github.com/opensds/multi-cloud/api/pkg/utils"
-	"github.com/opensds/multi-cloud/api/pkg/utils/constants"
 )
 
 var enforcer *Enforcer
@@ -87,7 +86,7 @@ func (e *Enforcer) Authorize(rule string, target map[string]string, cred map[str
 func (e *Enforcer) LoadRules(forcedReload bool) error {
 	path := os.Getenv("POLICY_PATH")
 	if path == "" {
-		path = constants.DefaultPolicyPath
+		path = utils.DefaultPolicyPath
 	}
 
 	fileInfo, err := os.Stat(path)
