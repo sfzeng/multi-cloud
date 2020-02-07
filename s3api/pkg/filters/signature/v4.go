@@ -37,7 +37,7 @@ import (
 	. "github.com/opensds/multi-cloud/s3api/pkg/error"
 	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/credentials"
 	"github.com/opensds/multi-cloud/s3api/pkg/filters/signature/credentials/keystonecredentials"
-
+	log "github.com/sirupsen/logrus"
 )
 
 // AWS Signature Version '4' constants.
@@ -263,6 +263,7 @@ func getCredentialUnverified(r *http.Request) (credential credentials.Value, err
 // returns true if matches, false otherwise. if error is not nil then it is always false
 func DoesSignatureMatchV4(hashedPayload string, r *http.Request,
 	validateRegion bool) (credential credentials.Value, err error) {
+	log.Debugln("auth v4")
 	// Save authorization header.
 	v4Auth := r.Header.Get("Authorization")
 
@@ -321,7 +322,6 @@ func DoesSignatureMatchV4(hashedPayload string, r *http.Request,
 
 	// Get string to sign from canonical request.
 	stringToSign := getStringToSign(canonicalRequest, t, region)
-
 	credential, e := keystonecredentials.NewCredentialsClient(signV4Values.Credential.accessKey).Get()
 	if e != nil {
 		return credential, ErrInvalidAccessKeyID

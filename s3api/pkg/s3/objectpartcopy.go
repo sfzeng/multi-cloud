@@ -152,8 +152,8 @@ func (s *APIService) ObjectPartCopy(request *restful.Request, response *restful.
 		ReadOffset:   readOffset,
 		ReadLength:   readLength,
 	})
-	if HandleS3Error(response, request, err, result.ErrorCode) != nil {
-		log.Errorf("failed to copy object part s3. err:%v, errCode:%v", err, result.ErrorCode)
+	if HandleS3Error(response, request, err, result.GetErrorCode()) != nil {
+		log.Errorf("failed to copy object part s3. err:%v, errCode:%v", err, result.GetErrorCode())
 		return
 	}
 

@@ -29,12 +29,12 @@ func (s *APIService) ListObjectParts(request *restful.Request, response *restful
 		MaxParts:         int64(listPartReq.MaxParts),
 		PartNumberMarker: int64(listPartReq.PartNumberMarker),
 	})
-	if err != nil {
-		log.Errorln("unable to list uploaded parts. err:", err)
-		WriteErrorResponse(response, request, err)
+	if HandleS3Error(response, request, err, listObjectPartsRes.GetErrorCode()) != nil {
+		log.Errorln("unable to init multipart. err:%v, errcode:%v", err, listObjectPartsRes.GetErrorCode())
 		return
 	}
 
+	log.Debugf("listObjectPartsRes:%+v\n", listObjectPartsRes)
 	data := datatype.ListPartsResponse{
 		Bucket:       bucketName,
 		Key:          objectKey,

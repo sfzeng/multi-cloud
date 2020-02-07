@@ -246,7 +246,7 @@ var ErrorCodeResponse = map[S3ErrorCode]S3ErrorStruct{
 	},
 	ErrBadDigest: {
 		AwsErrorCode:   "BadDigest",
-		Description:    "The Content-Md5 you specified did not match what we received.",
+		Description:    "The Content-MD5 you specified did not match what we received.",
 		HttpStatusCode: http.StatusBadRequest,
 	},
 	ErrBucketAlreadyExists: {
@@ -291,7 +291,7 @@ var ErrorCodeResponse = map[S3ErrorCode]S3ErrorStruct{
 	},
 	ErrInvalidDigest: {
 		AwsErrorCode:   "InvalidDigest",
-		Description:    "The Content-Md5 you specified is not valid.",
+		Description:    "The Content-MD5 you specified was invalid.",
 		HttpStatusCode: http.StatusBadRequest,
 	},
 	ErrInvalidRange: {
@@ -336,7 +336,7 @@ var ErrorCodeResponse = map[S3ErrorCode]S3ErrorStruct{
 	},
 	ErrNoSuchUpload: {
 		AwsErrorCode:   "NoSuchUpload",
-		Description:    "The specified multipart upload does not exist.",
+		Description:    "The specified multipart upload does not exist. The upload ID might be invalid, or the multipart upload might have been aborted or completed.",
 		HttpStatusCode: http.StatusNotFound,
 	},
 	ErrNoSuchVersion: {
@@ -351,7 +351,7 @@ var ErrorCodeResponse = map[S3ErrorCode]S3ErrorStruct{
 	},
 	ErrPreconditionFailed: {
 		AwsErrorCode:   "PreconditionFailed",
-		Description:    "At least one of the pre-conditions you specified did not hold.",
+		Description:    "At least one of the pre-conditions you specified did not hold",
 		HttpStatusCode: http.StatusPreconditionFailed,
 	},
 	ErrRequestTimeTooSkewed: {

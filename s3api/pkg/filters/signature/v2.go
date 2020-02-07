@@ -140,6 +140,7 @@ func dictate(secretKey string, stringToSign string, signature []byte, requestId 
 }
 
 func DoesSignatureMatchV2(r *http.Request) (credential credentials.Value, err error) {
+	log.Debugln("auth v2")
 	authorizationHeader := r.Header.Get("Authorization")
 	splitHeader := strings.Split(authorizationHeader, " ")
 	// Authorization = "AWS" + " " + AWSAccessKeyId + ":" + Signature;
