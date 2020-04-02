@@ -69,9 +69,10 @@ const (
 	REQUEST_HEADER_COPY_SOURCE_RANGE = "X-Amz-Copy-Source-Range"
 	REQUEST_HEADER_ACL               = "X-Amz-Acl"
 	REQUEST_HEADER_CONTENT_MD5       = "Content-Md5"
+	REQUEST_HEADER_CONTENT_SHA256    = "X-Amz-Content-Sha256"
 	REQUEST_HEADER_CONTENT_TYPE      = "Content-Type"
 	REQUEST_HEADER_SSE_KEY           = "x-amz-server-side-encryption"
-	REQUEST_HEADER_SSE_VALUE_AES256	 = "AES256"
+	REQUEST_HEADER_SSE_VALUE_AES256  = "AES256"
 )
 
 const (

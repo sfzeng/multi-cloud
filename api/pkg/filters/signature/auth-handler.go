@@ -29,8 +29,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/emicklei/go-restful"
+	"github.com/opensds/multi-cloud/api/pkg/common"
 	"github.com/opensds/multi-cloud/api/pkg/filters/signature/credentials"
 	. "github.com/opensds/multi-cloud/s3/error"
+	log "github.com/sirupsen/logrus"
 )
 
 // Verify if request has AWS Signature
@@ -127,24 +130,12 @@ func sumMD5(data []byte) []byte {
 
 // A helper function to verify if request has valid AWS Signature
 func IsReqAuthenticated(r *http.Request) (credential credentials.Value, e error) {
-	payload, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return credential, ErrInternalError
-	}
-	// Verify Content-Md5, if payload is set.
-	if r.Header.Get("Content-Md5") != "" {
-		if r.Header.Get("Content-Md5") != base64.StdEncoding.EncodeToString(sumMD5(payload)) {
-			return credential, ErrBadDigest
-		}
-	}
-	// Populate back the payload.
-	r.Body = ioutil.NopCloser(bytes.NewReader(payload))
 	validateRegion := false // TODO: Validate region.
 	switch GetRequestAuthType(r) {
 	case AuthTypePresignedV4:
 		return DoesPresignedSignatureMatchV4(r, validateRegion)
 	case AuthTypeSignedV4:
-		return DoesSignatureMatchV4(hex.EncodeToString(sum256(payload)), r, validateRegion)
+		return DoesSignatureMatchV4("", r, validateRegion)
 	case AuthTypePresignedV2:
 		return DoesPresignedSignatureMatchV2(r)
 	case AuthTypeSignedV2:
@@ -154,4 +145,32 @@ func IsReqAuthenticated(r *http.Request) (credential credentials.Value, e error)
 		return credential, err
 	}
 	return credential, ErrAccessDenied
+}
+
+// CheckPayload will check if Content-Md5 and X-Amz-Content-Sha256 in the header is same as caculated by body.
+// Note: Auth type except AuthTypeSignedV4 do not need to check X-Amz-Content-Sha256.
+func CheckPayload(req *restful.Request) error {
+	payload, err := ioutil.ReadAll(req.Request.Body)
+	if err != nil {
+		log.Errorln("read body failed")
+		return ErrInternalError
+	}
+	req.Request.Body = ioutil.NopCloser(bytes.NewReader(payload))
+
+	// Verify Content-Md5, if payload is set.
+	contentMd5 := req.Request.Header.Get(common.REQUEST_HEADER_CONTENT_MD5)
+	if contentMd5 != "" && contentMd5 != base64.StdEncoding.EncodeToString(sumMD5(payload)) {
+		log.Errorln("X-Amz-Content-Sha256 not match")
+		return ErrBadDigest
+	}
+
+	authType := GetRequestAuthType(req.Request)
+	if authType == AuthTypeSignedV4 {
+		if req.Request.Header.Get(common.REQUEST_HEADER_CONTENT_SHA256) != hex.EncodeToString(sum256(payload)) {
+			log.Errorln("X-Amz-Content-Sha256 not match")
+			return ErrContentSHA256Mismatch
+		}
+	}
+
+	return nil
 }

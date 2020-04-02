@@ -23,6 +23,9 @@ func (s *APIService) RouteObjectGet(request *restful.Request, response *restful.
 	if !policy.Authorize(request, response, "object:get") {
 		return
 	}
+	if CheckPayloadResult(request, response) != nil {
+		return
+	}
 
 	if IsQuery(request, "acl") {
 		s.ObjectAclGet(request, response)

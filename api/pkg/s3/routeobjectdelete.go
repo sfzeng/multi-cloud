@@ -9,6 +9,9 @@ func (s *APIService) RouteObjectDelete(request *restful.Request, response *restf
 	if !policy.Authorize(request, response, "object:delete") {
 		return
 	}
+	if CheckPayloadResult(request, response) != nil {
+		return
+	}
 	if IsQuery(request, "uploadId") {
 		s.AbortMultipartUpload(request, response)
 	} else {

@@ -23,6 +23,9 @@ func (s *APIService) RouteBucketGet(request *restful.Request, response *restful.
 	if !policy.Authorize(request, response, "bucket:get") {
 		return
 	}
+	if CheckPayloadResult(request, response) != nil {
+		return
+	}
 	if IsQuery(request, "acl") {
 		s.BucketAclGet(request, response)
 	} else if IsQuery(request, "uploads") {

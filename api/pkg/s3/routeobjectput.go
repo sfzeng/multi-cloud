@@ -24,18 +24,21 @@ func (s *APIService) RouteObjectPut(request *restful.Request, response *restful.
 		return
 	}
 
+	// Put object and upload part does not need to check payload here, it will be checked in s3 server.
+	if IsQuery(request, "acl") || IsQuery(request, "tagging") || IsQuery(request, "x-amz-copy-source") {
+		if CheckPayloadResult(request, response) != nil {
+			return
+		}
+	}
+
 	if IsQuery(request, "acl") {
 		s.ObjectAclPut(request, response)
 	} else if IsQuery(request, "tagging") {
 		//TODO
-	} else if IsQuery(request, "uploads") {
-		s.MultiPartUploadInit(request, response)
 	} else if IsQuery(request, "partNumber") && IsQuery(request, "uploadId") && HasHeader(request, "x-amz-copy-source") {
 		s.ObjectPartCopy(request, response)
 	} else if IsQuery(request, "partNumber") && IsQuery(request, "uploadId") {
 		s.UploadPart(request, response)
-	} else if IsQuery(request, "uploadId") {
-		s.CompleteMultipartUpload(request, response)
 	} else if HasHeader(request, "x-amz-copy-source") {
 		s.ObjectCopy(request, response)
 	} else {

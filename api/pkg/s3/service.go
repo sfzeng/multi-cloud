@@ -22,6 +22,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"github.com/micro/go-micro/client"
+	"github.com/opensds/multi-cloud/api/pkg/filters/signature"
 	"github.com/opensds/multi-cloud/backend/proto"
 	backendpb "github.com/opensds/multi-cloud/backend/proto"
 	. "github.com/opensds/multi-cloud/s3/error"
@@ -145,4 +146,13 @@ func HandleS3Error(response *restful.Response, request *restful.Request, err err
 	}
 
 	return nil
+}
+
+func CheckPayloadResult(req *restful.Request, res *restful.Response) error {
+	err := signature.CheckPayload(req)
+	if err != nil {
+		WriteErrorResponse(res, req, err)
+	}
+
+	return err
 }

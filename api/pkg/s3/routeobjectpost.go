@@ -26,6 +26,12 @@ func (s *APIService) RouteObjectPost(request *restful.Request, response *restful
 	if !policy.Authorize(request, response, "object:post") {
 		return
 	}
+
+	if IsQuery(request, "uploads") || IsQuery(request, "uploadId") {
+		if CheckPayloadResult(request, response) != nil {
+			return
+		}
+	}
 	if IsQuery(request, "uploads") {
 		s.MultiPartUploadInit(request, response)
 	} else if IsQuery(request, "uploadId") {

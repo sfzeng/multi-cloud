@@ -23,6 +23,9 @@ func (s *APIService) RouteBucketDelete(request *restful.Request, response *restf
 	if !policy.Authorize(request, response, "bucket:delete") {
 		return
 	}
+	if CheckPayloadResult(request, response) != nil {
+		return
+	}
 	if IsQuery(request, "acl") {
 		//TODO
 	} else if IsQuery(request, "versioning") {
