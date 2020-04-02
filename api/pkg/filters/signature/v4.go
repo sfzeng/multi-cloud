@@ -273,12 +273,7 @@ func DoesSignatureMatchV4(hashedPayload string, r *http.Request,
 		return credential, err
 	}
 
-	// Hashed payload mismatch, return content sha256 mismatch.
-	// http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
-	// The x-amz-content-sha256 header is required for all AWS Signature Version 4 requests.
-	// It provides a hash of the request payload. If there is no payload, you must provide
-	// the hash of an empty string. For PUT/POST object, payload is not calculated in API,
-	// it should be calculated in s3 server, otherwise API need to read all of the body.
+	// If hashedPayload is not provided, it will not be checked here.
 	if hashedPayload != "" && hashedPayload != r.Header.Get("X-Amz-Content-Sha256") {
 		return credential, ErrContentSHA256Mismatch
 	}

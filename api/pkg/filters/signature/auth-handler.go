@@ -166,6 +166,11 @@ func CheckPayload(req *restful.Request) error {
 
 	authType := GetRequestAuthType(req.Request)
 	if authType == AuthTypeSignedV4 {
+		// Hashed payload mismatch, return content sha256 mismatch.
+		// http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
+		// The x-amz-content-sha256 header is required for all AWS Signature Version 4 requests.
+		// It provides a hash of the request payload. If there is no payload, you must provide
+		// the hash of an empty string.
 		if req.Request.Header.Get(common.REQUEST_HEADER_CONTENT_SHA256) != hex.EncodeToString(sum256(payload)) {
 			log.Errorln("X-Amz-Content-Sha256 not match")
 			return ErrContentSHA256Mismatch
